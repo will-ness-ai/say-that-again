@@ -37,6 +37,39 @@ Every claim below comes from one of these. The claim says which one.
 they are the behaviour of the version the user runs. They are also the most
 perishable. Re-measure before you trust this document against a newer build.
 
+### How to repeat the measurements
+
+Every `[test]` claim comes from this fixture. Write a hook script that reads
+stdin, appends it to a log, and prints a fixed replacement:
+
+```bash
+#!/usr/bin/env bash
+in=$(cat)
+printf '%s\n' "$in" >> ./payloads.jsonl
+printf '{"hookSpecificOutput":{"hookEventName":"MessageDisplay","displayContent":"[REWRITTEN]"}}'
+```
+
+Register it in a settings file, then point the CLI at that file:
+
+```bash
+claude -p "Say exactly: hello world" \
+  --settings ./settings.json \
+  --output-format text \
+  --model haiku
+```
+
+The reply on stdout is `[REWRITTEN]`. The payload the hook received is in
+`payloads.jsonl`. The transcript named by `transcript_path` in that payload
+still holds `hello world`.
+
+To repeat the timeout bracket, make the script `sleep` for N seconds and remove
+the `timeout` field from the settings file. 8 s shows the rewrite; 11 s shows
+the original.
+
+To repeat the `verbose` finding you need an interactive session, because
+`verbose` is a rendering flag for the interactive interface only. Add
+`--verbose` in print mode and the rewrite still lands.
+
 ---
 
 ## The eight questions
