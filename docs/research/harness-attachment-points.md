@@ -66,6 +66,10 @@ To repeat the timeout bracket, make the script `sleep` for N seconds and remove
 the `timeout` field from the settings file. 8 s shows the rewrite; 11 s shows
 the original.
 
+To repeat the empty-string finding, change the script's last line to return
+`"displayContent":""` and read the `result` field with
+`--output-format json`. It comes back as the empty string.
+
 To repeat the `verbose` finding you need an interactive session, because
 `verbose` is a rendering flag for the interactive interface only. Add
 `--verbose` in print mode and the rewrite still lands.
@@ -106,9 +110,20 @@ Three facts about `MessageDisplay` decide most designs:
 3. In print mode and the SDK, the rewrite is **not display-only**. It replaces
    the text in the emitted assistant message and in the result. The transcript
    still keeps the original. `[test]`
+4. `displayContent: ""` is honoured and **erases the answer**. `[test]` The
+   seam is fail-open when the hook *fails*, not when it succeeds badly.
 
 Fact 2 is the failure a prior design hit. It is a one-line condition in the
 renderer, and nothing tells the sidecar that it happened.
+
+Two seams outside the hook system deserve a note, because both are easy to
+overlook. A plugin **output style** with `force-for-plugin: true` changes the
+text the model *generates*, so the result is real: it is in the transcript, in
+exports, and in the model's own context, and no `verbose` flag defeats it. It
+cannot use a separate model, and it silently overrides the user's own choice.
+An **MCP channel** is the only route by which an outside process makes new text
+appear with no tool call and no keystroke, and it passes seven silent gates to
+do so.
 
 ---
 
@@ -301,9 +316,20 @@ Two field facts that a design must respect:
 ```
 
 `displayContent` replaces what this flush renders. Omitting it leaves the flush
-alone. An empty string blanks the flush. The binary's own schema note:
-`"Text displayed in place of the delta. Omit (or return the delta unchanged) to
-display the original."` `[bin]`
+alone. The binary's own schema note: `"Text displayed in place of the delta.
+Omit (or return the delta unchanged) to display the original."` `[bin]`
+
+**An empty string is honoured, and it erases the answer.** Measured: a hook that
+returns `displayContent: ""` and exits 0 makes `result` come back as the empty
+string in print mode. `[test]` The whole answer is gone. The check in the
+renderer is `!== undefined`, so `""` is a value, not an omission. `[bin]`
+
+This is the safety fact of this whole document. **`MessageDisplay` is fail-open
+only when the hook fails.** A hook that succeeds and returns nothing useful
+silently deletes the assistant's reply. Any sidecar must treat "I produced no
+rewrite" as *omit the field*, never as *return an empty string*.
+
+The same behaviour is what makes true replace mode possible — see B.6.
 
 The per-flush results are concatenated **in order** to build the displayed
 message, even though the hook processes run in parallel. `[bin]`
@@ -470,7 +496,10 @@ There is **no way to disable one hook** while leaving it in the configuration.
 All matching hooks run in parallel, and each one receives the **original**
 delta, not another hook's output. Hooks do not chain. `[docs]` When two hooks
 both return `displayContent`, the docs state **no** precedence rule, and a test
-observed the winner change between otherwise identical runs. `[test]`
+observed the winner change between otherwise identical runs. `[test]` The
+mechanism is in the binary: the harness iterates the hook results and keeps
+assigning, so **the last result to arrive wins**. `[bin]` Because parallel hooks
+arrive in completion order, that is a race, not a precedence rule.
 
 **Documentation gap, and a real hazard.** A design must ensure that exactly one
 `MessageDisplay` hook returns `displayContent`, or the output is
@@ -694,7 +723,10 @@ So a driver that draws `stream_event` deltas for a live typing effect shows the
 **original text streaming in**, and then replaces it with the rewrite. The
 prior system's `replace` mode is the workaround, and it is documented nowhere:
 return `displayContent: ""` for every non-final flush to suppress the streamed
-original, then emit the whole rewrite on `final: true`.
+original, then emit the whole rewrite on `final: true`. The empty string is
+honoured — measured in A.4. Note also that each flush is a **separate process**,
+so a whole-message rewrite must buffer the deltas somewhere, keyed by
+`message_id`.
 
 ### B.7 Tailing the transcript from outside
 
@@ -1320,27 +1352,55 @@ types exactly:
 
 `[bin]`
 
-So the full component list is:
+That message lists only the types the two manifests can both declare. A plugin
+directory holds more than those. The full component list is:
 
-| Component | Can it put text on the screen? | Route |
-|---|---|---|
-| **Hooks** (`hooks/hooks.json`) | **Yes — including `MessageDisplay`** | Family A. This is the only plugin component that rewrites assistant prose |
-| Slash commands / skills | No, not directly | They inject a prompt (Family E) |
-| Agents (subagents) | Only through a model turn | — |
-| **Output styles** | Only by asking the model | Family C. A plugin style with `force-for-plugin: true` **overrides the user's own `outputStyle` setting** |
-| Themes and syntax highlighting | Colour only, not text | — |
-| **MCP servers** (`.mcp.json`) | Only through tool results the model asked for | Family H |
-| LSP servers (`.lsp.json`) | No | — |
-| Settings and sandbox configuration | No | — |
+| Component | Location | Can it put text on the screen? | Route |
+|---|---|---|---|
+| **Hooks** | `hooks/hooks.json` | **Yes — including `MessageDisplay`** | Family A. This is the only plugin component that rewrites assistant prose |
+| Slash commands / skills | `skills/`, `commands/` | No, not directly | They inject a prompt (Family E) |
+| Agents (subagents) | `agents/` | Only through a model turn | — |
+| **Output styles** | `output-styles/` | Only by asking the model | Family C. A plugin style with `force-for-plugin: true` **overrides the user's own `outputStyle` setting** |
+| Themes and syntax highlighting | `themes/`, `experimental.syntaxHighlighting` | Colour only, not text | — |
+| **MCP servers** | `.mcp.json` | Tool results the model asked for, **and channel events** | Family H |
+| LSP servers | `.lsp.json` | No. Diagnostics go into the model's context | — |
+| **Monitors** | `monitors/monitors.json` | Partly. See below | A long-lived process whose stdout lines reach Claude as notifications |
+| Workflows | `workflows/` | **Documentation gap** | Listed as a component with its own directory and manifest key. No rendering semantics are given |
+| Executables | `bin/` | No | Added to the Bash `PATH` while the plugin is enabled |
+| Settings | `settings.json` at the plugin root | Only a subagent status row | **Only the `agent` and `subagentStatusLine` keys are read** |
 
-**A plugin cannot ship a `statusLine`.** The status line is a settings key, not
-a plugin component type, and it is not in the manifest list. **Documentation
-gap** on whether a plugin's bundled settings file can carry one.
+`[docs]` `[bin]`
 
-**There is no plugin extension point that post-processes assistant message text
-other than the `MessageDisplay` hook.** A plugin registers no daemon and no
-background process of its own; every hook fire is a fresh subprocess unless the
-hook is of type `http`.
+**A plugin cannot ship the main `statusLine`.** A plugin may bundle a
+`settings.json`, but the key allowlist is fixed: "Only the `agent` and
+`subagentStatusLine` keys are supported". `[docs]` The binary holds the same
+allowlist as a literal pair. `[bin]` A `statusLine` key placed in that file is
+**ignored without a message**. This closes a gap named in an earlier draft of
+this document.
+
+**A plugin *can* register a background process.** Two ways:
+
+1. **Monitors.** `monitors/monitors.json`, or `experimental.monitors` in the
+   manifest. Each monitor "runs a shell command for the lifetime of the session
+   and delivers every stdout line to Claude as a notification". `[docs]` They
+   start with no user action beyond enabling the plugin.
+2. **An MCP server of `stdio` transport**, which is a long-lived child process.
+
+Monitor limits, all from the plugins reference: interactive CLI sessions only;
+unsandboxed, at the same trust level as hooks; skipped on hosts where the
+Monitor tool is unavailable; not loaded for a project-scope `@skills-dir`
+plugin; and **disabling the plugin mid-session does not stop a monitor that is
+already running** — it stops when the session ends. `[docs]`
+
+A monitor's stdout goes to *Claude*, as a notification. Only the monitor's
+`description` is documented as shown to the user. **Documentation gap** on
+whether monitor stdout content is ever drawn on screen.
+
+**There is still no plugin extension point that post-processes assistant
+message text other than the `MessageDisplay` hook.** The documentation states
+the split for this exact use: "For redaction or transformation use cases,
+intercept at `PreToolUse` for outbound tool inputs and `PostToolUse` for
+inbound tool results." `[docs]` Neither touches assistant prose.
 
 ### G.2 The manifest and the marketplace
 
@@ -1427,9 +1487,16 @@ notifications/prompts/list_changed
 notifications/resources/list_changed
 notifications/tasks/status
 notifications/tools/list_changed
+notifications/claude/channel
+notifications/claude/channel/permission
+notifications/claude/channel/permission_request
 ```
 
 `[bin]`
+
+The last three are **not MCP standard methods.** They are a Claude Code
+extension, and they are the one route by which a server pushes text with no
+tool call. Section H.3 covers them.
 
 **There is no handler for `notifications/message`.** The MCP logging channel is
 in the bundled protocol library, and the server side can send it, but the
@@ -1450,11 +1517,109 @@ a tool call the model made is running.
 | `elicitation/create` | **Yes — a dialog** | **Yes, in principle.** The client supports elicitation and queues it in application state, and the `Elicitation` hook event exists for it. It asks for input; it is not a text display |
 | `sampling/createMessage` | Runs a model call for the server | Not a display route |
 | `notifications/message` (logging) | **No handler in 2.1.246** | — |
-| `notifications/progress` | Only inside an in-flight request | No |
+| `notifications/progress` | Only inside an in-flight request. **Documentation gap** on what it draws | No |
+| **`notifications/claude/channel`** | **Yes — an inbound line** | **Yes.** The one true unprompted route. See H.3 |
 
 `[bin]`
 
-### H.3 The eight questions
+### H.3 Channels — the one unprompted route
+
+A **channel** is an MCP server that pushes events into a session that is already
+open. `[docs]` This is the only supported way for a process outside the agent
+loop to make new text appear with no tool call and no user keystroke.
+
+**How it works.** The server declares
+`capabilities.experimental['claude/channel']`, then sends
+`notifications/claude/channel` with two parameters:
+
+| Parameter | Type | Meaning |
+|---|---|---|
+| `content` | `string` | The body of the event |
+| `meta` | `Record<string, string>` | Optional. Each entry becomes an attribute for routing context |
+
+`[docs]`
+
+**What the two audiences see.** The user gets a one-line inbound summary. The
+model gets a tag. Both forms are quoted in the documentation:
+
+```
+← webhook: build failed on main: https://ci.example.com/run/1234
+```
+
+```xml
+<channel source="webhook" path="/" method="POST">build failed on main: https://ci.example.com/run/1234</channel>
+```
+
+`[docs]`
+
+**Every gate, in the order the binary applies them.** Each one returns a skip
+with a reason, and none of them reaches the server:
+
+| # | Gate | Skip reason, verbatim from the binary |
+|---|---|---|
+| 1 | Capability | `server did not declare claude/channel capability` |
+| 2 | Protocol era | `connection negotiated a modern protocol revision with no unsolicited notification path` |
+| 3 | Provider | `channels are not available on third-party providers` |
+| 4 | Feature flag | `channels feature is not currently available` |
+| 5 | Organisation policy | `channels not enabled by org policy (set channelsEnabled: true in managed settings)` |
+| 6 | Session opt-in | `server <name> not in --channels list for this session` |
+| 7 | Marketplace match | The plugin must come from the marketplace the user named |
+
+`[bin]`
+
+Gate 2 is the sharpest trap. If `MCP_PROTOCOL_NEGOTIATION` is `auto` and the
+server negotiates protocol revision 2026-07-28, **channels stop working with no
+message.** `[docs]` Gate 6 means the user must pass `--channels` at every
+launch. Gate 3 excludes Amazon Bedrock, Google Cloud, and Microsoft Foundry;
+channels need claude.ai or Console authentication. `[docs]`
+
+An allowlist sits on top: the research preview restricts `--channels` to
+plugins Anthropic curates, or to an organisation's `allowedChannelPlugins`.
+`--dangerously-load-development-channels` skips **the allowlist only**; the
+`channelsEnabled` policy still applies. `[docs]`
+
+**The delivery contract is fire-and-forget.** The documentation is explicit:
+
+> Claude Code doesn't acknowledge notifications. The `await` on
+> `mcp.notification()` resolves when the message is written to the transport,
+> not when Claude has processed it. If the session hasn't loaded your server as
+> a channel, or the organization policy blocks it, Claude Code drops the events
+> silently and returns no error to your server.
+
+`[docs]`
+
+Meta keys must be letters, digits, and underscores. **Keys with a hyphen are
+silently dropped.** `[docs]` The binary logs the count it dropped, but only to
+its own log. `[bin]`
+
+**The eight questions for a channel.**
+
+**1. Name and trigger.** `notifications/claude/channel`, sent by the server at
+any moment it chooses.
+
+**2. Cadence.** Zero per assistant message. It is not tied to the turn at all.
+
+**3. Input shape.** The server *sends*; it receives nothing. Its outbound
+parameters are `{ content, meta }`, above.
+
+**4. Authority.** It adds a new inbound line. It cannot change or suppress
+assistant prose.
+
+**5. Delivery guarantee.** **No, and this is the worst case in this document.**
+Seven gates, each of which fails silently, plus an allowlist and a research
+preview whose "flag syntax and protocol contract may change". `[docs]` Events
+that arrive while Claude is busy are batched and delivered on the next turn.
+
+**6. Acknowledgement.** **No.** Stated as a design property, not an omission.
+The documented workaround is to hold state on the server and expose a reply
+tool the model can call.
+
+**7. Budget.** It does not block the agent loop.
+
+**8. Persistence.** Yes. A channel event is conversation content, so it is in
+the transcript.
+
+### H.4 The eight questions
 
 **1. Name and trigger.** An MCP server configured in `.mcp.json`, in settings,
 or by `--mcp-config`. Transports: stdio, SSE, HTTP. `[cli]` Its tools appear to
@@ -1486,10 +1651,12 @@ tool call. `[bin]` A tool call blocks the agent loop.
 **8. Persistence.** Tool results are conversation content, so they are in the
 transcript and survive.
 
-### H.4 Verdict for a rewriting sidecar
+### H.5 Verdict for a rewriting sidecar
 
-**An MCP server is the wrong seam.** It cannot see assistant prose and it cannot
-write unprompted. Its one relevance is indirect: a `MessageDisplay` hook may be
+**An MCP server is the wrong seam.** It cannot see assistant prose. It *can*
+write unprompted, through a channel, but a channel passes seven silent gates and
+is in research preview — the opposite of what a load-bearing seam needs. Its one
+relevance is indirect: a `MessageDisplay` hook may be
 of `type: "mcp_tool"`, so an MCP server can be the *implementation* of the
 rewriter that the hook calls. `[docs]` That is a transport choice inside
 Family A, not a separate attachment point.
@@ -1535,13 +1702,29 @@ investigation could not settle from a primary source.
     the event "display-only" and never state that it replaces
     `assistant.message.content[].text` and `result.result`. Established here by
     measurement.
-14. **Whether a plugin's bundled settings can carry a `statusLine`.**
-15. **Maximum hook timeout.** No global maximum is documented for any hook type.
+14. **Maximum hook timeout.** No global maximum is documented for any hook type.
     Only `SessionEnd` has a stated 60-second cap.
-16. **Whether `systemMessage` is persisted in the transcript.** Documented for
+15. **Whether `systemMessage` is persisted in the transcript.** Documented for
     `additionalContext`, never for `systemMessage`.
-17. **`--include-partial-messages` and `MessageDisplay`.** A test shows partial
+16. **`--include-partial-messages` and `MessageDisplay`.** A test shows partial
     deltas carry the original; the docs do not say so.
+17. **Whether a plugin monitor's stdout is ever drawn on screen**, or whether
+    only its `description` is. The reference says stdout goes to Claude as a
+    notification, and stops there.
+18. **`workflows` as a plugin component.** It has a directory and a manifest
+    key, and no documented rendering or execution semantics.
+19. **Whether an MCP server may send `elicitation/create` outside an in-flight
+    tool call.** Every description of elicitation places it mid-task.
+20. **What `notifications/progress` draws on screen.** A handler is registered.
+    The rendering is never described.
+21. **Whether Claude Code supports MCP `sampling/createMessage`.** Its MCP
+    documentation never states one way or the other.
+22. **`experimental.syntaxHighlighting.hljsLanguages`** is present in 2.1.246
+    and absent from the plugins reference.
+
+A gap this document **closed** since its first draft: a plugin's bundled
+`settings.json` can carry only `agent` and `subagentStatusLine`, so a plugin
+cannot ship the main status line. See G.1.
 
 ---
 
@@ -1559,10 +1742,13 @@ Read down the left column, across the top. Question 5 is the one that decides.
 | **`PostCompact` hook** | After compaction | 0. Once per compaction | `trigger`, `compact_summary` | Exit-0 stdout, which is **shown to the user** | One of the few events whose stdout is documented as shown to the user. Discards `systemMessage` and `continue` | No | 600 s default. **Blocks** | Documentation gap |
 | **`terminalSequence` on any hook** | Any hook's JSON output | As the host event | As the host event | Only OSC 0, 1, 2, 9, 99, 777 and BEL. Everything else is dropped | **No.** Interactive only, and only while the interface is on screen. **Ignored entirely in print mode and the SDK** | No | The host hook's | **No.** Transient by nature |
 | **Output style** | A file read at session start | 0. Read once per conversation | Nothing | The tail of the system prompt, and it drops the built-in coding block by default | **No — the weakest guarantee here.** It is a request the model may ignore, with no validation and no retry. Also discarded by: the style being unavailable in the session (silent); a plugin `force-for-plugin` override; `--safe-mode`; every subagent; **any change made mid-session, which needs `/clear`** | No. The status line reports which style is *loaded*, never compliance | None. Does not block | The instructions are never shown. The output they shape is normal transcript text |
+| **Plugin output style, `force-for-plugin: true`** | A file read at session start, applied with no user selection | 0. Read once per conversation | Nothing | The tail of the system prompt. It **overrides the user's own `outputStyle` setting** | **The style is applied reliably; the *wording* is not.** It steers what the model writes, so there is no validation and no retry. It needs `/clear` or a new session to take effect. The first loaded plugin wins if several force a style. It does **not** apply to subagents. But **no `verbose` flag defeats it** | No compliance signal. `/config` shows the active style | None. Adds input tokens, cached after the first request | **Yes, fully.** The styled text *is* the transcript, the export, and what the model sees next turn |
 | **Status line** | The `statusLine` settings key | 1 per assistant message, plus 6 other triggers, debounced 300 ms | A large JSON object: `session_id`, `model`, `workspace`, `version`, `output_style`, `cost`, `context_window`, `rate_limits`, `vim`, `agent`, `pr`, `worktree`, and more | Only the status-line rows. Multi-line, ANSI colour, emoji, OSC 8 links | **No.** Discarded by: **print mode and every non-interactive run**; untrusted workspace; `disableAllHooks`; `allowManagedHooksOnly` (silent); `--safe-mode` (silent); a non-zero exit; empty output; a newer trigger cancelling the in-flight run; autocomplete, help and permission prompts hiding the row; a notification overwriting it | **No** | **Timeout is a documentation gap.** Does not block the agent; blocks only its own row | **No.** Repainted in place, never in the transcript |
 | **Slash command or skill** | A typed `/name`, or the `Skill` tool | 0. It precedes the message | Argument substitution and `${CLAUDE_*}` variables only | The prompt sent to the model, the turn's tool grants, model and effort. **Not the rendered output** | **It never renders.** It causes a model turn, so it inherits every reliability problem of an output style. Also discarded by `--disable-slash-commands`, `skillOverrides: "off"`, a name clash, `disableSkillShellExecution`, a failed injected command aborting the whole invocation, `--safe-mode` | No. A hook can confirm invocation, which is not display | Injected `!` commands run under the Bash tool's 2-minute default and block the invocation | **Yes.** The injected content is a conversation message and survives compaction within a 25 000-token re-attach budget |
-| **Plugin** | A container, not an event | Whatever its components do | Whatever its components receive | The union of its components. For display that means the `MessageDisplay` hook and nothing else | As its components, plus `strictPluginOnlyCustomization`, `disableCommandPluginSources`, `--safe-mode`, `--bare`, plugin shadowing, an untrusted workspace at scan time, and auto-uninstall on delisting | No | Its components' | Its components' |
+| **Plugin** | A container, not an event | Whatever its components do | Whatever its components receive | The union of its components. For assistant prose that means the `MessageDisplay` hook and nothing else. It may also ship a monitor, an MCP channel server, and an output style that forces itself on | As its components, plus `strictPluginOnlyCustomization`, `disableCommandPluginSources`, `--safe-mode`, `--bare`, plugin shadowing, an untrusted workspace at scan time, and auto-uninstall on delisting | No | Its components' | Its components' |
 | **MCP server** | The model calls one of its tools | 0 | The MCP `tools/call` request | Its own tool results, resources and prompts. **Never assistant prose** | A tool result renders, subject to `viewMode` truncation and `MAX_MCP_OUTPUT_TOKENS`. **Unprompted text has no route: 2.1.246 registers no handler for `notifications/message`.** An unapproved `.mcp.json` server is not connected to | No | `MCP_TIMEOUT`, `MCP_TOOL_TIMEOUT`. A tool call **blocks** | **Yes.** Tool results are conversation content |
+| **MCP channel** (`notifications/claude/channel`) | The server pushes, at any moment it chooses | 0. It is not tied to the turn | Nothing. It **sends** `{content, meta}` | It adds an inbound line: `← server: text`. The model sees a `<channel>` tag. **It cannot touch assistant prose** | **No — the worst case in this document.** Seven silent gates: capability, protocol era (`MCP_PROTOCOL_NEGOTIATION=auto` kills it), third-party provider, feature flag, org `channelsEnabled`, the per-launch `--channels` list, marketplace match. Plus a curated allowlist. Research preview | **No.** Documented as fire-and-forget: dropped events "return no error to your server" | Does not block. Events during a busy turn are batched to the next one | **Yes.** Conversation content |
+| **Plugin monitor** (`monitors/monitors.json`) | Starts at session start; runs for the session | 0. Continuous, not per message | Nothing. It **emits** stdout lines | Sends each stdout line to **Claude** as a notification. Its `description` is what the user is documented to see | Interactive CLI only. Not on Bedrock, Google Cloud or Foundry. Not for a project-scope `@skills-dir` plugin. **Documentation gap** on whether stdout content ever reaches the screen | No | Does not block | Notifications enter the model's context |
 | **SDK driver that owns the interface** | `query()` | 1 `assistant` message, plus many `stream_event` partials | The full `SDKMessage` union | Anything, in its own rendering | **Yes, unconditionally — for its own window.** It has **zero reach** into an interactive session it did not start | **Yes** | None. Does not block | Whatever it stores |
 | **Print mode, `claude -p`** | One invocation | 1 result | `text`, `json` or `stream-json` on stdout | Anything, in its own rendering | Guaranteed for its own output. Note: **settings files that fail validation are silently ignored under `-p`** | Yes | None | Whatever the caller stores |
 | **Tailing the transcript `.jsonl`** | A file watch | 1 line per event | `queue-operation`, `attachment`, `user`, `assistant`, `last-prompt` lines | **Nothing.** Read-only | Not applicable. It is an input. It **lags the in-memory conversation** by design, and never contains a `MessageDisplay` rewrite | Not applicable | None. Does not block | **Yes**, permanently — which is why it holds the original |
@@ -1574,9 +1760,11 @@ Read down the left column, across the top. Question 5 is the one that decides.
 ## Recommendation
 
 **Attach at `MessageDisplay`.** It is the only seam that rewrites assistant
-prose before it is rendered, it works in the interactive interface and in print
-mode from one implementation, and its failure mode is fail-open — a dead
-sidecar shows the original answer rather than breaking the session.
+prose before it is rendered, and it works in the interactive interface and in
+print mode from one implementation. A *dead* sidecar is safe: a crash, a
+timeout, or a non-zero exit shows the original answer. A *live* sidecar is not
+automatically safe — `displayContent: ""` is honoured and erases the answer
+(A.4), so the no-rewrite path must omit the field, not blank it.
 
 **Budget for 10 seconds, not 60.** The default on this event is 10 s, and a
 sidecar that does not set `timeout` explicitly will be killed silently on any
@@ -1590,3 +1778,12 @@ won the race, or that its output was dropped. Before any rewriting logic is
 written, build the check that answers "was my output rendered, and if not,
 why not?" — the `verbose` setting is readable from the same settings files the
 hook is registered in, and the debug log records every fire.
+
+**One alternative is worth weighing before starting.** If the restyled text must
+be *real* — in the transcript, in exports, and in the model's own context, and
+immune to `verbose` — then the seam is not a sidecar at all. It is a plugin
+output style with `force-for-plugin: true`, which steers generation instead of
+rewriting output. The costs are that it cannot use a separate local model, it
+needs `/clear` to take effect, it does not reach subagents, and it silently
+overrides whatever style the user chose. The two mechanisms are complementary,
+and one plugin can ship both.
