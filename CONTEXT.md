@@ -39,3 +39,11 @@ _Avoid_: Hook, integration point, attachment
 **Reader**:
 The person who reads the re-write.
 _Avoid_: User, customer, consumer
+
+**Text block**:
+One run of assistant prose in a message. A message that holds prose, a tool call, then more prose holds two text blocks. The text block is the unit the sidecar re-writes. See [ADR 0002](docs/adr/0002-re-write-assistant-text-blocks-only.md).
+_Avoid_: Chunk, segment, paragraph, flush
+
+**Gate**:
+The length test that decides if a text block gets a re-write. A text block longer than 200 characters passes the gate.
+_Avoid_: Threshold, filter, minimum length
