@@ -28,6 +28,10 @@ _Avoid_: Voice, tone, persona, format
 The property that a translation says what its original said, and no more.
 _Avoid_: Accuracy, faithfulness, correctness
 
+**Fidelity check**:
+The test that pulls the byte-for-byte items out of an original and tests that the translation holds each one. It makes no model call, and it runs in a test harness, not in front of the reader. See [ADR 0005](docs/adr/0005-the-fidelity-check-is-a-test-instrument.md).
+_Avoid_: Validator, guard, verifier, judge
+
 **Label**:
 An identifier in an original that the reader uses to point back at it, such as a question number or an option letter.
 _Avoid_: Reference, tag, marker
