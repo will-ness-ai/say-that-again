@@ -80,7 +80,7 @@ Two forms from `show-me` are excluded:
 
 ## What a translation keeps
 
-A translation says what its original said, and no more. Three things must survive.
+A translation says what its original said, and no more. Three things must survive. [`fidelity.md`](fidelity.md) holds the full keep list, what a machine can test, and what it cannot.
 
 **Facts.** Each name, number, file path, command, and the direction of each negation.
 
@@ -97,6 +97,7 @@ Labels and asks are the same rule: **the translation must still be a valid thing
 | Question | Owner |
 |---|---|
 | How much delay two calls add, and what the reader sees while they run | [What is the latency budget, and does the re-write stream?](https://github.com/will-ness-ai/say-that-again/issues/8) |
-| How to detect a translation that dropped a fact, a label, or an ask | [What must a re-write keep unchanged, and how do we detect a bad re-write?](https://github.com/will-ness-ai/say-that-again/issues/6) |
+| A translation runs 8 % to 87 % longer than its original, and the original stays on screen | [A translation is longer than its original, and the reader gets both](https://github.com/will-ness-ai/say-that-again/issues/15) |
+| Call 1 draws in the words of the original, and call 2 places the drawing untranslated | [The diagram arrives untranslated — who translates it?](https://github.com/will-ness-ai/say-that-again/issues/16) |
 | Whether the seam can render Mermaid | [Where does the sidecar attach, and where does its output go?](https://github.com/will-ness-ai/say-that-again/issues/7) |
 | Whether the fidelity rules may live in a style at all, since a style can delete them | [Where do the fidelity rules live — in the style, or in machinery?](https://github.com/will-ness-ai/say-that-again/issues/13) |
