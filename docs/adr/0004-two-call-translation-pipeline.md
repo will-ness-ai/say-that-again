@@ -16,12 +16,15 @@ One call cannot hold both jobs well. Drawing needs its own menu of forms and its
 
 ## The price
 
-[ADR 0001](0001-rewrite-rather-than-steer.md) accepted one extra model call for each assistant message. This design costs two, and the two cannot run together. The delay before the reader sees anything approximately doubles.
+[ADR 0001](0001-rewrite-rather-than-steer.md) accepted one extra model call. [ADR 0002](0002-re-write-assistant-text-blocks-only.md) corrected the unit of that figure from the message to the **text block**, and a message can hold several text blocks.
+
+This decision multiplies that figure by two. **Two sequential model calls for each text block that passes the gate.** The two cannot run together, so the delay before the reader sees anything approximately doubles as well.
 
 We accept the second call. We do not accept the latency without measurement: [What is the latency budget, and does the re-write stream?](https://github.com/will-ness-ai/say-that-again/issues/8) owns that budget, and this decision is what makes it urgent.
 
 ## Consequences
 
-- Zero diagrams is a normal result of the first call, not a failure. Most assistant messages need no picture.
+- Zero diagrams is a normal result of the first call, not a failure. Most text blocks need no picture.
 - A style carries a switch that turns the first call off. A style that does not want diagrams does not pay for the call.
 - The first call cannot read the repository. It draws only what the original states.
+- A diagram marked `replaces-prose` removes prose from the **translation** only. [ADR 0002](0002-re-write-assistant-text-blocks-only.md) appends the translation below the original and leaves the original on screen, so the reader keeps the prose either way.

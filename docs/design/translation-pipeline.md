@@ -28,7 +28,9 @@ How the reader turns the sidecar off during a session is not decided here. It st
 
 ## The two calls
 
-Each part of each prompt is wrapped in its own XML tag. [ADR 0002](../adr/0002-two-call-translation-pipeline.md) records why there are two calls.
+Each part of each prompt is wrapped in its own XML tag. [ADR 0004](../adr/0004-two-call-translation-pipeline.md) records why there are two calls.
+
+**The unit is one text block, not one message.** [ADR 0002](../adr/0002-re-write-assistant-text-blocks-only.md) set that unit and set the gate: a text block longer than 200 characters passes. The pipeline below runs once for each text block that passes. A message with three qualifying text blocks therefore costs six model calls.
 
 | Prompt part | Call 1 — diagrams | Call 2 — translation |
 |---|---|---|
@@ -37,7 +39,7 @@ Each part of each prompt is wrapped in its own XML tag. [ADR 0002](../adr/0002-t
 | `glossary` | if present | if present |
 | `context` | yes | yes |
 | `user-message` | yes | yes |
-| `assistant-message` | yes | yes |
+| `text-block` | yes | yes |
 | `diagrams` | — | from call 1 |
 | instructions (user prompt) | yes | yes |
 
@@ -45,7 +47,7 @@ The prompt text is in [`docs/prompts/`](../prompts/).
 
 **Call 1 draws only what the original states.** It cannot read the repository. If the original names three files, it can draw those three files. This keeps call 1 to one bounded model call.
 
-**Call 1 may return nothing.** Most assistant messages need no picture. Zero diagrams is a correct result.
+**Call 1 may return nothing.** Most text blocks need no picture. Zero diagrams is a correct result.
 
 ### The contract between the calls
 
@@ -54,7 +56,9 @@ Call 1 marks each diagram, and names in one line the point that diagram covers:
 - `replaces-prose` — the diagram carries that point completely, with every fact of the prose it covers.
 - `supplements` — the diagram illustrates a point that the prose must still make.
 
-The mark carries no pointer into the original. Call 2 re-flows the whole message, so a pointer into the structure of the original points at text that no longer exists. Call 2 holds the original, the diagrams, and the pen, so call 2 decides where each diagram goes.
+The mark carries no pointer into the original. Call 2 re-flows the whole text block, so a pointer into the structure of the original points at text that no longer exists. Call 2 holds the original, the diagrams, and the pen, so call 2 decides where each diagram goes.
+
+`replaces-prose` removes prose from the **translation**, never from the screen. [ADR 0002](../adr/0002-re-write-assistant-text-blocks-only.md) appends the translation below the original and leaves the original in place, so the reader keeps the prose either way. The fidelity rule still holds: a reader must not have to look up at the original to recover a fact.
 
 ### Which forms call 1 may draw
 
@@ -93,6 +97,6 @@ Labels and asks are the same rule: **the translation must still be a valid thing
 | Question | Owner |
 |---|---|
 | How much delay two calls add, and what the reader sees while they run | [What is the latency budget, and does the re-write stream?](https://github.com/will-ness-ai/say-that-again/issues/8) |
-| Whether a diagram is output the sidecar may produce at all | [Which assistant output is in scope for a re-write?](https://github.com/will-ness-ai/say-that-again/issues/4) |
 | How to detect a translation that dropped a fact, a label, or an ask | [What must a re-write keep unchanged, and how do we detect a bad re-write?](https://github.com/will-ness-ai/say-that-again/issues/6) |
 | Whether the seam can render Mermaid | [Where does the sidecar attach, and where does its output go?](https://github.com/will-ness-ai/say-that-again/issues/7) |
+| Whether the fidelity rules may live in a style at all, since a style can delete them | [Where do the fidelity rules live — in the style, or in machinery?](https://github.com/will-ness-ai/say-that-again/issues/13) |
