@@ -23,8 +23,16 @@ MODES = ("verbose", "disableAllHooks", "allowManagedHooksOnly")
 PLUGIN_CACHE = os.path.expanduser("~/.claude/plugins/cache")
 
 
+OURS = ("hook.sh", "sidecar.py", "discard.py")
+
+
 def harness_argv():
-    """The command line of the harness process, found by walking up from this process."""
+    """The command line of the harness process, found by walking up from this process.
+
+    The hook runs under a shell that the harness spawned, so the first ancestor that names
+    `claude` and is not part of the sidecar is the harness. A probe passes `--settings`, and a
+    real session does not, so the walk must not test for that flag.
+    """
     pid = os.getppid()
     for _ in range(12):
         if pid <= 1:
@@ -39,7 +47,7 @@ def harness_argv():
         if not out:
             break
         parent, _, args = out.partition(" ")
-        if "claude" in args and "--settings" in args:
+        if "claude" in args and not any(name in args for name in OURS):
             return args.split()
         try:
             pid = int(parent)
