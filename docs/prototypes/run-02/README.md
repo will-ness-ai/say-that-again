@@ -39,6 +39,23 @@ STA_TAG=solo docs/prototypes/run-02/run-tty.sh "Explain how git rebase differs f
 
 The live runner needs `tmux` and an `OPENROUTER_API_KEY` in `.env` at the project root.
 
+## Use it in a real session
+
+Copy `pipeline.py`, `sidecar.py`, `discard.py`, `styles/` and a `hook.sh` that sets the defaults into `~/.claude/say-that-again/`, put the key in a `.env` beside them, then register the hook in `~/.claude/settings.json`:
+
+```json
+"MessageDisplay": [
+  { "hooks": [{ "type": "command", "command": "<install>/hook.sh", "timeout": 120 }] }
+]
+```
+
+Two settings differ from the measurement runs, and both follow from the verdicts: `STA_DETECT` is `on`, and the style ships `diagrams: off`. On a live message that pair costs **2.4 s and $0.0020**, against 8.6 s and $0.0062 with the diagram call left on.
+
+Installing found two faults that the probes hid, and both are fixed here:
+
+- `harness_argv()` tested for `--settings`, which only a probe passes. A real session has no such flag, so `--verbose` was never found. It now walks to the first ancestor that names `claude` and is not part of the sidecar.
+- `load_key()` started its search one directory above itself, so a `.env` beside the sidecar was never read.
+
 ## What the reader gets
 
 One live probe, unedited. The original is above the rule, and the translation is below it.

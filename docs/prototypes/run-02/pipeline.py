@@ -66,7 +66,7 @@ def load_key():
     key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if key:
         return key
-    for depth in range(1, 7):
+    for depth in range(0, 7):
         path = os.path.join(HERE, *([".."] * depth), ".env")
         if os.path.exists(path):
             for line in open(path):
