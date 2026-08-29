@@ -1,0 +1,7 @@
+# Generated. These files hold machine file paths and real conversation, so they stay out of
+# the repository. See AGENTS.md.
+settings.json
+state/
+panes/
+work/
+__pycache__/
