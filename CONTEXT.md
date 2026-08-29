@@ -75,3 +75,7 @@ _Avoid_: Chunk, flush, part, fragment
 **Fail-open**:
 The rule that every error path leaves the original on screen. The sidecar prints nothing, exits 0, and the harness draws the original. The sidecar only adds text. It never removes text. See [ADR 0006](docs/adr/0006-attach-at-messagedisplay-and-append-to-the-final-delta.md).
 _Avoid_: Graceful degradation, fallback, safe failure
+
+**Inference source**:
+The service that answers a model call, and the model it runs. One setting names the model, and both calls of the pipeline use it. See [ADR 0007](docs/adr/0007-one-model-through-openrouter.md).
+_Avoid_: Provider, backend, endpoint, LLM
