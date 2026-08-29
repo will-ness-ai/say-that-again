@@ -1,0 +1,171 @@
+{
+  "model": "anthropic/claude-haiku-4.5",
+  "style": "bare",
+  "rows": [
+    {
+      "name": "S1",
+      "pass": 0,
+      "pass_count": 10,
+      "check_count": 11,
+      "missing": [
+        [
+          "backtick",
+          "read_message_history"
+        ]
+      ],
+      "chars_in": 2115,
+      "chars_out": 3529,
+      "seconds": 10.7,
+      "cost_usd": 0.007563,
+      "prompt_tokens": 1798,
+      "cached_tokens": 0,
+      "diagram_chars": 1488,
+      "failure": null
+    },
+    {
+      "name": "S2",
+      "pass": 0,
+      "pass_count": 12,
+      "check_count": 12,
+      "missing": [],
+      "chars_in": 848,
+      "chars_out": 1295,
+      "seconds": 5.2,
+      "cost_usd": 0.004056,
+      "prompt_tokens": 1126,
+      "cached_tokens": 0,
+      "diagram_chars": 516,
+      "failure": null
+    },
+    {
+      "name": "S3",
+      "pass": 0,
+      "pass_count": 35,
+      "check_count": 39,
+      "missing": [
+        [
+          "backtick",
+          "DEMO 2"
+        ],
+        [
+          "backtick",
+          "DEMO 3"
+        ],
+        [
+          "backtick",
+          "surface:199"
+        ],
+        [
+          "number",
+          "199"
+        ]
+      ],
+      "chars_in": 1951,
+      "chars_out": 2247,
+      "seconds": 11.6,
+      "cost_usd": 0.009294,
+      "prompt_tokens": 2484,
+      "cached_tokens": 0,
+      "diagram_chars": 1293,
+      "failure": null
+    },
+    {
+      "name": "S4",
+      "pass": 0,
+      "pass_count": 4,
+      "check_count": 5,
+      "missing": [
+        [
+          "label",
+          "Q3"
+        ]
+      ],
+      "chars_in": 1644,
+      "chars_out": 1284,
+      "seconds": 7.1,
+      "cost_usd": 0.003687,
+      "prompt_tokens": 1412,
+      "cached_tokens": 0,
+      "diagram_chars": 681,
+      "failure": null
+    },
+    {
+      "name": "S1",
+      "pass": 1,
+      "pass_count": 10,
+      "check_count": 11,
+      "missing": [
+        [
+          "backtick",
+          "read_message_history"
+        ]
+      ],
+      "chars_in": 2115,
+      "chars_out": 3056,
+      "seconds": 10.2,
+      "cost_usd": 0.007386,
+      "prompt_tokens": 1791,
+      "cached_tokens": 0,
+      "diagram_chars": 1117,
+      "failure": null
+    },
+    {
+      "name": "S2",
+      "pass": 1,
+      "pass_count": 12,
+      "check_count": 12,
+      "missing": [],
+      "chars_in": 848,
+      "chars_out": 853,
+      "seconds": 4.3,
+      "cost_usd": 0.003329,
+      "prompt_tokens": 1134,
+      "cached_tokens": 0,
+      "diagram_chars": 589,
+      "failure": null
+    },
+    {
+      "name": "S3",
+      "pass": 1,
+      "pass_count": 38,
+      "check_count": 39,
+      "missing": [
+        [
+          "backtick",
+          "route --help"
+        ]
+      ],
+      "chars_in": 1951,
+      "chars_out": 2181,
+      "seconds": 11.7,
+      "cost_usd": 0.008775,
+      "prompt_tokens": 2400,
+      "cached_tokens": 0,
+      "diagram_chars": 1118,
+      "failure": null
+    },
+    {
+      "name": "S4",
+      "pass": 1,
+      "pass_count": 4,
+      "check_count": 5,
+      "missing": [
+        [
+          "label",
+          "Q3"
+        ]
+      ],
+      "chars_in": 1644,
+      "chars_out": 1575,
+      "seconds": 8.4,
+      "cost_usd": 0.004247,
+      "prompt_tokens": 1442,
+      "cached_tokens": 0,
+      "diagram_chars": 757,
+      "failure": null
+    }
+  ],
+  "checks": 134,
+  "failures": 9,
+  "cost_usd": 0.048337
+}
