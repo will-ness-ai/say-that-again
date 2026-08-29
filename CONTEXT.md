@@ -53,7 +53,7 @@ The fall in how often a model obeys a style instruction as a conversation grows.
 _Avoid_: Drift, instruction fatigue
 
 **Seam**:
-The point at which the sidecar attaches to the harness, and by which a translation reaches the reader.
+The point at which the sidecar attaches to the harness, and by which a translation reaches the reader. See [ADR 0006](docs/adr/0006-attach-at-messagedisplay-and-append-to-the-final-delta.md).
 _Avoid_: Hook, integration point, attachment
 
 **Reader**:
@@ -61,9 +61,17 @@ The person who reads the translation.
 _Avoid_: User, customer, consumer
 
 **Text block**:
-One run of assistant prose in a message. A message that holds prose, a tool call, then more prose holds two text blocks. The text block is the unit the sidecar re-writes. See [ADR 0002](docs/adr/0002-re-write-assistant-text-blocks-only.md).
+The assistant prose of one message, named by its `message_id`. The text block is the unit the sidecar translates. A tool call ends a message, so prose that follows a tool call is a new message and a new text block. See [ADR 0002](docs/adr/0002-re-write-assistant-text-blocks-only.md) and [ADR 0006](docs/adr/0006-attach-at-messagedisplay-and-append-to-the-final-delta.md).
 _Avoid_: Chunk, segment, paragraph, flush
 
 **Gate**:
 The length test that decides if a text block gets a re-write. A text block longer than 200 characters passes the gate.
 _Avoid_: Threshold, filter, minimum length
+
+**Delta**:
+One part of a text block, as the seam offers it. The seam cuts a text block at its newlines and marks the last part `final`. The sidecar collects the deltas of one text block and acts on the final one. See [ADR 0006](docs/adr/0006-attach-at-messagedisplay-and-append-to-the-final-delta.md).
+_Avoid_: Chunk, flush, part, fragment
+
+**Fail-open**:
+The rule that every error path leaves the original on screen. The sidecar prints nothing, exits 0, and the harness draws the original. The sidecar only adds text. It never removes text. See [ADR 0006](docs/adr/0006-attach-at-messagedisplay-and-append-to-the-final-delta.md).
+_Avoid_: Graceful degradation, fallback, safe failure

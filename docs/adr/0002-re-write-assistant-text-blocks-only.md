@@ -2,7 +2,7 @@
 
 ## Status
 
-accepted
+accepted, and amended in three places by [ADR 0006](0006-attach-at-messagedisplay-and-append-to-the-final-delta.md). See [Amendments](#amendments).
 
 ## Decision
 
@@ -51,3 +51,15 @@ Two smaller faults in the prior gate are not repeated here by construction, beca
 **One fact is unsettled and must be measured.** Two sources disagree on whether the harness offers the hook a text block that comes **after** a tool call in the same message. A measurement of the harness says only the first text block is offered. The harness documentation says the hook fires again for text after a tool call. The scope above states the intent — every text block. The seam decision must measure which source is right, and record the gap if the answer is the narrower one.
 
 **A re-write cannot be re-read.** The appended text never enters the transcript, the export, or a resumed session. It survives only in the terminal scrollback.
+
+## Amendments
+
+[ADR 0006](0006-attach-at-messagedisplay-and-append-to-the-final-delta.md) measured the seam on CLI 2.1.251 and corrected three statements above. The evidence is in [`docs/research/seam-measurements.md`](../research/seam-measurements.md).
+
+**1. A message holds one text block, not several.** The Decision says "a message that holds prose, a tool call, then more prose holds two text blocks". That message does not occur. A tool call ends the assistant message, and the prose after it opens a new message with its own `message_id`. A text block is therefore the assistant prose of one message.
+
+**2. The unsettled fact was a category error, and it is settled.** The Consequence asks which source is right about a text block that follows a tool call in the same message. Both sources are right, about different things. The harness documentation says the seam fires again after a tool call — it does, for the next message. The catalogue says only the first text block of a message is offered — it is, because a message carries one.
+
+**3. An append does not have to risk the answer.** The Consequence says "a fault that drops the original half erases the assistant's answer". That is true of one construction only — blanking each delta and rebuilding the whole answer at the end. It is not forced. The sidecar can leave every delta alone and add the translation to the final delta, so a fault costs one delta rather than the answer. A probe that crashes the hook on the final delta leaves the answer complete on screen.
+
+Amendment 1 also changes the cost figure. The bill is two model calls for each qualifying **message**, and one appended translation below it.
