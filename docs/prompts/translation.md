@@ -40,6 +40,13 @@ Place each diagram next to the text it supports. A diagram marked replaces-prose
 point completely, so the prose it covers goes. A diagram marked supplements sits beside its
 prose, and that prose stays.
 
+Translate the words inside each diagram, as you translate the prose around it. Keep the shape
+of the diagram: its lines, its boxes, its columns, and the order of its parts. A name, a number,
+a file path, and a command stay exactly as they are, inside a diagram as outside one.
+
+A diagram is what <diagrams> holds. A fenced block inside <text-block> is code. It is not a
+diagram, and you do not translate it.
+
 Leave fenced code blocks exactly as they are.
 
 Write the translation and nothing else.
@@ -69,6 +76,9 @@ Each line must change what the model does. A line that the model already obeys p
 | Keep every ask | A model drops a closing question when it condenses. The session then stops. |
 | glossary as a dictionary | The model treats supplied material as content to include. |
 | Place each diagram | The model appends the diagrams in a block at the end. |
+| Translate the words inside each diagram | Call 1 draws in the words of the original, and call 2 places the drawing without touching it. The reader then gets translated prose around an untranslated picture, and a French style writes French around English. See [run 02](../prototypes/run-02/README.md), verdict 5. |
+| Keep the shape … a command stays exactly as it is | A model told to translate a diagram re-flows the art and breaks its alignment, and it translates `git merge <branch-name>` into words. A diagram holds facts, and the keep list does not stop at a fence. |
+| A diagram is what `<diagrams>` holds | A diagram and a code block are both fenced, so "translate the diagram" and "leave fenced code blocks" contradict each other. The source is what separates them, not the fence. |
 | Leave fenced code blocks | The model reformats and "improves" code. |
 | the translation and nothing else | The model opens with a preamble and closes with a summary. The output must drop in with no parsing. |
 
@@ -79,5 +89,6 @@ Drafted, then removed for failing the test above.
 - **"Add concrete details: file paths, commands, examples."** A translator told to add file paths invents file paths. This is the exact failure [ADR 0001](../adr/0001-rewrite-rather-than-steer.md) exists to prevent.
 - **"Explain unfamiliar terms on first mention."** To explain a term the model must supply knowledge the original never held. The glossary line covers the safe part of this.
 - **"Replace hedged phrases like 'it's worth noting'."** Naming a phrase makes it more available to the model, not less. "Plainest words" reaches the same result without saying it.
+- **"The ask is the last thing you write. No diagram comes after it."** Written to fix a measured defect, and it did not fix it. The model puts the diagrams after the closing question, so the reader scrolls to the bottom and finds a box. The line was added and the same sample failed the same way on both passes. **The defect is real and the fix is not a prompt line** — the ask survives, and it is buried. See [run 02](../prototypes/run-02/README.md), the French arm.
 - **"Vary sentence length to create rhythm."** Rhythm makes prose sound human. It does not make the reader understand faster.
 - **"Avoid sounding like an AI."** A prohibition with no positive target.

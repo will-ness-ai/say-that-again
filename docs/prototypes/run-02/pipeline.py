@@ -140,15 +140,24 @@ def call(model, system, user, key, timeout=90):
 
 
 def draw(text_block, style, model, key, timeout=90):
-    """Call 1. An empty answer is a correct result, not a fault."""
+    """Call 1. An empty answer is a correct result, not a fault.
+
+    A model that is told to return nothing often argues instead: it answers with prose that
+    explains why it will not draw. That answer is not empty, so nothing upstream catches it,
+    and call 2 is told to place whatever `<diagrams>` holds. An answer with no fenced block
+    holds no diagram, whatever else it holds, so it is dropped here.
+    """
     system = system_message(DIAGRAM_ROLE, DIAGRAM_JOB)
     user = f"{DIAGRAM_INSTRUCTION}\n\n<text-block>\n{text_block}\n</text-block>"
     try:
-        return call(model, system, user, key, timeout)
+        content, usage, seconds = call(model, system, user, key, timeout)
     except CallFailure as failure:
         if failure.cls == "refusal":
             return "", {}, 0.0
         raise
+    if "```" not in content:
+        return "", usage, seconds
+    return content, usage, seconds
 
 
 def translate(text_block, diagrams, style, model, key, timeout=90):
