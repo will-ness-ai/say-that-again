@@ -1,0 +1,148 @@
+{
+  "model": "anthropic/claude-haiku-4.5",
+  "style": "french",
+  "rows": [
+    {
+      "name": "S1",
+      "pass": 0,
+      "pass_count": 10,
+      "check_count": 11,
+      "missing": [
+        [
+          "ask",
+          "original ends with a question"
+        ]
+      ],
+      "chars_in": 2115,
+      "chars_out": 4316,
+      "seconds": 14.4,
+      "cost_usd": 0.010912,
+      "prompt_tokens": 2217,
+      "cached_tokens": 0,
+      "diagram_chars": 1894,
+      "failure": null
+    },
+    {
+      "name": "S2",
+      "pass": 0,
+      "pass_count": 12,
+      "check_count": 12,
+      "missing": [],
+      "chars_in": 848,
+      "chars_out": 1984,
+      "seconds": 6.5,
+      "cost_usd": 0.006156,
+      "prompt_tokens": 1541,
+      "cached_tokens": 0,
+      "diagram_chars": 994,
+      "failure": null
+    },
+    {
+      "name": "S3",
+      "pass": 0,
+      "pass_count": 37,
+      "check_count": 39,
+      "missing": [
+        [
+          "backtick",
+          "cat examples.md \\| glow"
+        ],
+        [
+          "backtick",
+          "route ticket-skill add grill-design --when \""
+        ]
+      ],
+      "chars_in": 1951,
+      "chars_out": 2665,
+      "seconds": 12.4,
+      "cost_usd": 0.01069,
+      "prompt_tokens": 2685,
+      "cached_tokens": 0,
+      "diagram_chars": 1077,
+      "failure": null
+    },
+    {
+      "name": "S4",
+      "pass": 0,
+      "pass_count": 5,
+      "check_count": 5,
+      "missing": [],
+      "chars_in": 1644,
+      "chars_out": 2025,
+      "seconds": 7.8,
+      "cost_usd": 0.005633,
+      "prompt_tokens": 1573,
+      "cached_tokens": 0,
+      "diagram_chars": 0,
+      "failure": null
+    },
+    {
+      "name": "S1",
+      "pass": 1,
+      "pass_count": 10,
+      "check_count": 11,
+      "missing": [
+        [
+          "ask",
+          "original ends with a question"
+        ]
+      ],
+      "chars_in": 2115,
+      "chars_out": 3575,
+      "seconds": 12.9,
+      "cost_usd": 0.009704,
+      "prompt_tokens": 2089,
+      "cached_tokens": 0,
+      "diagram_chars": 1044,
+      "failure": null
+    },
+    {
+      "name": "S2",
+      "pass": 1,
+      "pass_count": 12,
+      "check_count": 12,
+      "missing": [],
+      "chars_in": 848,
+      "chars_out": 1674,
+      "seconds": 5.5,
+      "cost_usd": 0.00536,
+      "prompt_tokens": 1450,
+      "cached_tokens": 0,
+      "diagram_chars": 589,
+      "failure": null
+    },
+    {
+      "name": "S3",
+      "pass": 1,
+      "pass_count": 39,
+      "check_count": 39,
+      "missing": [],
+      "chars_in": 1951,
+      "chars_out": 3812,
+      "seconds": 16.9,
+      "cost_usd": 0.014261,
+      "prompt_tokens": 2851,
+      "cached_tokens": 0,
+      "diagram_chars": 1473,
+      "failure": null
+    },
+    {
+      "name": "S4",
+      "pass": 1,
+      "pass_count": 5,
+      "check_count": 5,
+      "missing": [],
+      "chars_in": 1644,
+      "chars_out": 2027,
+      "seconds": 7.8,
+      "cost_usd": 0.005618,
+      "prompt_tokens": 1573,
+      "cached_tokens": 0,
+      "diagram_chars": 0,
+      "failure": null
+    }
+  ],
+  "checks": 134,
+  "failures": 4,
+  "cost_usd": 0.068334
+}

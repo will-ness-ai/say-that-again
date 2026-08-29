@@ -24,6 +24,7 @@ The first run of the whole sidecar against a running harness. It answers [Protot
 | `hook.sh` | The `MessageDisplay` hook entry. |
 | `styles/plain.json` | The shipped style. |
 | `styles/bare.json` | The same style with the fidelity rules deleted. The test for verdict 3. |
+| `styles/french.json` | The same style, written in French. The test for verdict 5 — an English style cannot show a language seam. |
 | `bench.py` | Runs the run 01 corpus through the real pipeline, and scores it with the run 01 check. |
 | `settings.sh`, `run-tty.sh` | Write the settings file, and drive a live terminal through `tmux`. |
 | `out/` | The translations and the scores of each corpus arm. |
@@ -49,7 +50,9 @@ Copy `pipeline.py`, `sidecar.py`, `discard.py`, `styles/` and a `hook.sh` that s
 ]
 ```
 
-Two settings differ from the measurement runs, and both follow from the verdicts: `STA_DETECT` is `on`, and the style ships `diagrams: off`. On a live message that pair costs **2.4 s and $0.0020**, against 8.6 s and $0.0062 with the diagram call left on.
+One setting differs from the measurement runs: `STA_DETECT` is `on`, so the sidecar spends nothing when the harness will discard its answer. `diagrams` stays `on` — the author ruled it, and the picture is the point.
+
+**The style changed after the measurement runs.** Verdict 5 added three lines to the `job`, so a re-run of `bench.py` will not reproduce the tables above exactly. The scores after the change: 198/201 on the English arm, 130/134 on the French arm.
 
 Installing found two faults that the probes hid, and both are fixed here:
 
@@ -168,7 +171,7 @@ Two more results:
 - **The size is not repeatable either.** The same sample, S1, drew 1122, 2086, and 1711 characters on three passes.
 - **The diagram lands at the end, not beside its point.** In every live probe call 2 put the boxes after the prose and before the closing ask. The `job` line "Place each diagram next to the text it supports" is not obeyed by this model. The ask does survive, which is what matters most.
 
-**Recommendation: ship with `diagrams: off`.** It removes more than half the text on screen, 40 % of the wait, 37 % of the bill, and one of the two calls, and the corpus shows no fidelity loss it was protecting.
+**The author ruled `diagrams: on`** — the picture is the point of the sidecar, and a cost verdict does not overrule that. What follows was measured after the ruling.
 
 ### 5. The diagram is untranslated
 
@@ -178,13 +181,48 @@ Call 1 draws in the words of the original, and call 2 places the drawing without
 
 The two candidate fixes both cost more than the problem. Translating the diagram in call 2 asks a model to re-flow ASCII art without breaking its alignment. Giving call 1 the style stops call 1 being machinery, so every style then owns a drawing prompt.
 
-Verdict 4 makes the choice cheap: the diagram is 56 % of the screen cost and 40 % of the wait. **Switch call 1 off by default.** The question of what language a diagram is written in then belongs to a style that switches it back on, and that style pays for the answer.
+**The author ruled: keep the diagram, and have call 2 translate it.** Three lines were added to the style's `job` — translate the words inside a diagram, keep its shape, keep a name and a path and a command exactly, and treat only what `<diagrams>` holds as a diagram, because a code block is fenced too and the two instructions otherwise contradict each other.
+
+A French style was written to test it, because an English style cannot show a language seam. It works:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Dialogue de confirmation : Ouvrir (→ public)                │
+├─────────────────────────────────────────────────────────────┤
+│ Cela rend l'historique complet des messages de #x lisible   │
+│ par ~N membres vérifiés. Une fermeture ultérieure ne       │
+│ défait pas cela. Continuer ?                               │
+│                    [Confirmer]  [Annuler]                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+The labels, the prose inside the box, and the buttons are all French. The box is intact, and `#x`, `~N`, `60s`, `public` and `private` survived. Run 01 finding 6 is closed.
+
+Three costs came with it, all measured on the French arm:
+
+- **The alignment breaks on any line the model rewrote.** The right border drifts, because the model cannot recount a box width after it changes the words inside. Cosmetic, and visible in every French diagram.
+- **The translation grows.** The French arm ran 1.23× to 2.34× the original, against 1.01× median for the English arm. A style that changes language pays for the diagram twice: once to draw it, once to re-write it.
+- **The diagram buries the ask.** This is the one that matters, and it is new.
+
+#### The diagram buries the ask
+
+The French S1 holds its closing question — `Êtes-vous d'accord ?` — and then two diagram blocks after it. The reader scrolls to the end and finds a box, not a question. The ask is kept and lost at the same time, and [`check.py`](../run-01/check.py) catches it because it tests the last character.
+
+A prompt line was written for it: *"The ask is the last thing you write. No diagram comes after it."* **It did not work.** The same sample failed the same way on both passes with the line in place, so the line was cut — `translation.md` requires a line to change what the model does, and this one did not.
+
+**The fix is machinery, not a prompt.** After call 2 returns, if the original ends with an ask and the translation ends with a fenced block, the sidecar moves the trailing fences above the closing paragraph. That is deterministic and testable, and it is the only part of this verdict still open.
+
+#### The refusal that is not empty
 
 One new fault appeared, and it is the reason not to leave call 1 on unwatched. On S4 the correct answer was no diagram. Haiku 4.5 did not return nothing. It returned prose that explains why it will not draw:
 
 > I don't see a view that makes this text clearer than prose. The text is a decision rationale with three supporting elements…
 
-That happened in **three of the five S4 runs** — 845, 848, and 681 characters of unfenced prose — and every one of them was sent to call 2 inside `<diagrams>` as if it were a picture. Call 2 ignored it each time. Nothing in the pipeline makes that safe, and nothing detects it: an unfenced answer is not an empty answer. The prompt line "Return nothing … That is a correct answer" does not hold on this model.
+That happened in **three of the five S4 runs** — 845, 848, and 681 characters of unfenced prose — and every one of them was sent to call 2 inside `<diagrams>` as if it were a picture. Call 2 ignored it each time. The prompt line "Return nothing … That is a correct answer" does not hold on this model.
+
+Three things drive it. A chat model cannot really return nothing, so told to produce an absence it produces the most chat-like thing available: an explanation of the absence. The instruction has no positive form to obey, unlike "Keep every label". And at `temperature` 0.2 it is not repeatable — S4 refused on two passes and drew a `supplements` diagram on the third, from the same input.
+
+**Fixed in `pipeline.py`: an answer with no fenced block is no diagram, and it is dropped before call 2 sees it.** Every one of the 20 diagram answers is binary — a mark line and a fence, or prose and no fence at all, with nothing in between — so the test is exact. Without it the pipeline hands call 2 an essay and tells it to *place each diagram next to the text it supports*; the reader would then read "I don't see a view that makes this text clearer than prose" inside an assistant message the assistant never wrote.
 
 ### 6. The silent discard
 
