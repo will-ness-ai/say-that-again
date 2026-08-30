@@ -40,16 +40,48 @@ def without_frontmatter(text):
     return text[end + 4:].lstrip("\n")
 
 
-def vendored(name):
-    """A third-party skill, word for word, less its frontmatter.
+# Forms that `show-me` offers and this sidecar cannot deliver. Mermaid does not render in a
+# terminal, and unrendered it is a wall of syntax that is worse than the prose it replaced. The
+# HTML form ends in `Bash(open ...)`, and a sidecar has no shell. Cutting the bullets is what
+# removes them: a model does not reach for a form the menu never showed it, and a line saying
+# "no Mermaid" would put Mermaid in the context window on every call.
+UNDRAWABLE = ("with Mermaid", "write one focused HTML file")
+
+
+def without_forms(text, markers):
+    """A menu without the bullets that name `markers`.
+
+    A bullet runs from its own `- ` line to the next `- ` line or `###` heading, so its worked
+    example travels with it.
+    """
+    lines = text.split("\n")
+    edges, fenced = [], False
+    for i, line in enumerate(lines):
+        if line.startswith("```"):
+            fenced = not fenced
+        elif not fenced and (line.startswith("- ") or line.startswith("###")):
+            # A `- ` inside a fence is a diff removal, not a bullet.
+            edges.append(i)
+    edges.append(len(lines))
+    drop = set()
+    for start, stop in zip(edges, edges[1:]):
+        if lines[start].startswith("- ") and any(m in lines[start] for m in markers):
+            drop.update(range(start, stop))
+    return "\n".join(line for i, line in enumerate(lines) if i not in drop).strip()
+
+
+def vendored(name, drop=()):
+    """A third-party skill, word for word, less its frontmatter and any dropped forms.
 
     The file on disk stays byte-for-byte what its author published, so it can be checked
-    against the source. See docs/prompts/vendor/README.md.
+    against the source. Every edit happens here, once, and is named. See
+    docs/prompts/vendor/README.md.
     """
     for directory in VENDOR_DIRS:
         path = os.path.join(directory, name)
         if os.path.exists(path):
-            return without_frontmatter(open(path).read().strip()).strip()
+            text = without_frontmatter(open(path).read().strip()).strip()
+            return without_forms(text, drop) if drop else text
     raise FileNotFoundError(f"{name} is in none of {VENDOR_DIRS}")
 
 
@@ -62,8 +94,9 @@ answer that a picture carries better than prose.
 You draw only what the answer already states. You cannot read the repository, so each path,
 name, and step you draw comes from the text itself."""
 
-# The `show-me` skill, word for word. Its forms are the whole job of this call.
-DIAGRAM_JOB = vendored("show-me.SKILL.md")
+# The `show-me` skill, less the two forms a terminal cannot show. Its remaining forms are
+# the whole job of this call.
+DIAGRAM_JOB = vendored("show-me.SKILL.md", drop=UNDRAWABLE)
 
 DIAGRAM_FORMAT = """Write nothing but diagrams. Give each one a fenced block, and one line
 directly above the fence that names its point and how it lands:

@@ -9,13 +9,13 @@
       "check_count": 11,
       "missing": [],
       "chars_in": 2115,
-      "chars_out": 2788,
+      "chars_out": 3144,
       "context_chars": 1798,
-      "seconds": 9.3,
-      "cost_usd": 0.008881,
-      "prompt_tokens": 4341,
+      "seconds": 9.5,
+      "cost_usd": 0.009496,
+      "prompt_tokens": 4236,
       "cached_tokens": 0,
-      "diagram_chars": 890,
+      "diagram_chars": 1203,
       "failure": null
     },
     {
@@ -25,50 +25,58 @@
       "check_count": 12,
       "missing": [],
       "chars_in": 848,
-      "chars_out": 1022,
+      "chars_out": 923,
       "context_chars": 1282,
-      "seconds": 5.9,
-      "cost_usd": 0.00581,
-      "prompt_tokens": 3535,
+      "seconds": 4.8,
+      "cost_usd": 0.005935,
+      "prompt_tokens": 3430,
       "cached_tokens": 0,
-      "diagram_chars": 566,
+      "diagram_chars": 674,
       "failure": null
     },
     {
       "name": "S3",
       "pass": 0,
-      "pass_count": 39,
+      "pass_count": 36,
       "check_count": 39,
-      "missing": [],
+      "missing": [
+        [
+          "backtick",
+          "route --help"
+        ],
+        [
+          "backtick",
+          "surface:199"
+        ],
+        [
+          "number",
+          "199"
+        ]
+      ],
       "chars_in": 1951,
-      "chars_out": 1960,
+      "chars_out": 1963,
       "context_chars": 1494,
-      "seconds": 12.3,
-      "cost_usd": 0.0113,
-      "prompt_tokens": 4985,
+      "seconds": 10.2,
+      "cost_usd": 0.010522,
+      "prompt_tokens": 4742,
       "cached_tokens": 0,
-      "diagram_chars": 1401,
+      "diagram_chars": 1225,
       "failure": null
     },
     {
       "name": "S4",
       "pass": 0,
-      "pass_count": 4,
+      "pass_count": 5,
       "check_count": 5,
-      "missing": [
-        [
-          "label",
-          "Q3"
-        ]
-      ],
+      "missing": [],
       "chars_in": 1644,
-      "chars_out": 2096,
+      "chars_out": 2003,
       "context_chars": 1546,
-      "seconds": 7.0,
-      "cost_usd": 0.00787,
-      "prompt_tokens": 4000,
+      "seconds": 6.9,
+      "cost_usd": 0.00706,
+      "prompt_tokens": 3780,
       "cached_tokens": 0,
-      "diagram_chars": 596,
+      "diagram_chars": 575,
       "failure": null
     },
     {
@@ -78,13 +86,13 @@
       "check_count": 11,
       "missing": [],
       "chars_in": 2115,
-      "chars_out": 3067,
+      "chars_out": 2979,
       "context_chars": 1798,
-      "seconds": 9.3,
-      "cost_usd": 0.009567,
-      "prompt_tokens": 4397,
+      "seconds": 9.8,
+      "cost_usd": 0.009434,
+      "prompt_tokens": 4234,
       "cached_tokens": 0,
-      "diagram_chars": 1125,
+      "diagram_chars": 1129,
       "failure": null
     },
     {
@@ -94,54 +102,54 @@
       "check_count": 12,
       "missing": [],
       "chars_in": 848,
-      "chars_out": 892,
+      "chars_out": 1102,
       "context_chars": 1282,
-      "seconds": 4.1,
-      "cost_usd": 0.005291,
-      "prompt_tokens": 3476,
+      "seconds": 4.2,
+      "cost_usd": 0.005343,
+      "prompt_tokens": 3283,
       "cached_tokens": 0,
-      "diagram_chars": 327,
+      "diagram_chars": 321,
       "failure": null
     },
     {
       "name": "S3",
       "pass": 1,
-      "pass_count": 39,
+      "pass_count": 38,
       "check_count": 39,
-      "missing": [],
+      "missing": [
+        [
+          "backtick",
+          "route --help"
+        ]
+      ],
       "chars_in": 1951,
-      "chars_out": 1923,
+      "chars_out": 1900,
       "context_chars": 1494,
-      "seconds": 10.9,
-      "cost_usd": 0.010934,
-      "prompt_tokens": 4939,
+      "seconds": 12.5,
+      "cost_usd": 0.010276,
+      "prompt_tokens": 4681,
       "cached_tokens": 0,
-      "diagram_chars": 1193,
+      "diagram_chars": 1042,
       "failure": null
     },
     {
       "name": "S4",
       "pass": 1,
-      "pass_count": 4,
+      "pass_count": 5,
       "check_count": 5,
-      "missing": [
-        [
-          "ask",
-          "original ends with a question"
-        ]
-      ],
+      "missing": [],
       "chars_in": 1644,
-      "chars_out": 1787,
+      "chars_out": 2194,
       "context_chars": 1546,
-      "seconds": 6.8,
-      "cost_usd": 0.007162,
-      "prompt_tokens": 3982,
+      "seconds": 5.9,
+      "cost_usd": 0.00758,
+      "prompt_tokens": 3805,
       "cached_tokens": 0,
-      "diagram_chars": 622,
+      "diagram_chars": 648,
       "failure": null
     }
   ],
   "checks": 134,
-  "failures": 2,
-  "cost_usd": 0.066815
+  "failures": 4,
+  "cost_usd": 0.065646
 }
