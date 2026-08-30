@@ -70,8 +70,34 @@ def without_forms(text, markers):
     return "\n".join(line for i, line in enumerate(lines) if i not in drop).strip()
 
 
-def vendored(name, drop=()):
-    """A third-party skill, word for word, less its frontmatter and any dropped forms.
+# `show-me` closes by telling the writer to hold back. That line was written for an agent that
+# draws one picture beside its prose. This sidecar wants the pictures to carry the answer, so
+# the paragraph goes. The paragraph above it, which bounds what goes inside a picture, stays.
+RESTRAINT = ("it is unlikely you will use all of them",)
+
+
+def without_paragraphs(text, markers):
+    """A document without the paragraphs that name `markers`.
+
+    A paragraph runs to the next blank line outside a fence, so a fenced block travels whole.
+    """
+    groups, current, fenced = [], [], False
+    for line in text.split("\n"):
+        if line.startswith("```"):
+            fenced = not fenced
+        elif not fenced and not line.strip():
+            groups.append(current)
+            current = []
+            continue
+        current.append(line)
+    groups.append(current)
+    kept = ["\n".join(g).strip("\n") for g in groups]
+    return "\n\n".join(p for p in kept
+                        if p.strip() and not any(m in p for m in markers)).strip()
+
+
+def vendored(name, drop=(), unsay=()):
+    """A third-party skill, word for word, less its frontmatter, forms, and paragraphs.
 
     The file on disk stays byte-for-byte what its author published, so it can be checked
     against the source. Every edit happens here, once, and is named. See
@@ -81,7 +107,11 @@ def vendored(name, drop=()):
         path = os.path.join(directory, name)
         if os.path.exists(path):
             text = without_frontmatter(open(path).read().strip()).strip()
-            return without_forms(text, drop) if drop else text
+            if drop:
+                text = without_forms(text, drop)
+            if unsay:
+                text = without_paragraphs(text, unsay)
+            return text
     raise FileNotFoundError(f"{name} is in none of {VENDOR_DIRS}")
 
 
@@ -94,9 +124,9 @@ answer that a picture carries better than prose.
 You draw only what the answer already states. You cannot read the repository, so each path,
 name, and step you draw comes from the text itself."""
 
-# The `show-me` skill, less the two forms a terminal cannot show. Its remaining forms are
-# the whole job of this call.
-DIAGRAM_JOB = vendored("show-me.SKILL.md", drop=UNDRAWABLE)
+# The `show-me` skill, less the two forms a terminal cannot show and the line that tells the
+# writer to hold back. Its remaining forms are the whole job of this call.
+DIAGRAM_JOB = vendored("show-me.SKILL.md", drop=UNDRAWABLE, unsay=RESTRAINT)
 
 DIAGRAM_FORMAT = """Write nothing but diagrams. Give each one a fenced block, and one line
 directly above the fence that names its point and how it lands:
@@ -107,8 +137,11 @@ directly above the fence that names its point and how it lands:
   supplements: <the point it covers> the diagram illustrates a point that the prose must still
                                      make in words.
 
-Most answers need no picture. Return nothing when no view makes the answer clearer. That is a
-correct answer."""
+Draw each part of the answer that has a shape. A sequence, a tree, a set of options, a
+comparison, a flow, a set of conditions, and a change all have a shape. Words are what is left
+for the parts that have none, so draw first and leave the words little to carry.
+
+The closing question or recommendation of an answer stays in words. Draw what leads up to it."""
 
 # The `stop-slop` skill, word for word. It rides with every style.
 STOP_SLOP = vendored("stop-slop.SKILL.md")

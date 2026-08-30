@@ -12,6 +12,7 @@ import argparse
 import concurrent.futures
 import json
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -37,6 +38,36 @@ def cached_of(usage):
 
 
 CONTEXTS = json.load(open(os.path.join(HERE, "context.json")))
+
+
+# A drawn line is one the reader takes in by its shape: a fenced block, a bullet, a numbered
+# step, or a table row. A heading is navigation and counts as neither.
+BULLET = re.compile(r"^\s*([-*+]\s|\d+[.)]\s)")
+
+
+def drawn(text):
+    """(drawn, in a block, lines that hold anything) - how much of an answer is a picture.
+
+    The goal is an answer a reader takes in at a glance, so this counts what the shapes
+    carry. A prompt change that means to move it has to be measured against it.
+
+    The two counts separate two results. `drawn` holds every shaped line. `blocked` holds
+    only the fenced ones, which is where a tree, a flow, and a table of columns live. A model
+    that turns each paragraph into a bullet lifts the first count and leaves the second flat.
+    """
+    shaped = blocked = held = 0
+    fenced = False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        stripped = line.strip()
+        if not stripped or (not fenced and stripped.startswith("#")):
+            continue
+        held += 1
+        blocked += fenced
+        shaped += fenced or bool(BULLET.match(line)) or stripped.startswith("|")
+    return shaped, blocked, held
 
 
 def one(name, original, style, model, key):
@@ -90,7 +121,10 @@ def main():
         cached = cached_of(record["usage"]["call1"]) + cached_of(record["usage"]["call2"])
         prompt_tokens = sum(int((record["usage"][c] or {}).get("prompt_tokens") or 0)
                             for c in ("call1", "call2"))
+        picture_lines, block_lines, held_lines = drawn(translation)
         rows.append({
+            "picture_lines": picture_lines, "block_lines": block_lines,
+            "held_lines": held_lines,
             "name": name, "pass": record["pass"], "pass_count": len(checks) - len(bad),
             "check_count": len(checks), "missing": [(c[0], c[1]) for c in bad],
             "chars_in": len(original), "chars_out": len(translation),
@@ -101,21 +135,30 @@ def main():
             "failure": record["failure"],
         })
         grew = (len(translation) / len(original) * 100 - 100) if translation else 0
+        share = picture_lines / held_lines * 100 if held_lines else 0
+        in_block = block_lines / held_lines * 100 if held_lines else 0
         print(f"### {name} p{record['pass']}  {len(checks) - len(bad)}/{len(checks)} pass"
               f"   {len(original)} -> {len(translation)} chars ({grew:+.0f}%)"
+              f"   drawn {share:.0f}% ({in_block:.0f}% in a block) of {held_lines}"
               f"   {record['seconds'].get('total', 0):.1f}s"
               f"   ${cost:.5f}   cached {cached}/{prompt_tokens} tok"
               f"   {record['failure'] or ''}")
         for kind, label, _ in bad:
             print(f"    MISSING  {kind:12} {label!r}")
 
+    pictures = sum(r["picture_lines"] for r in rows)
+    blocks = sum(r["block_lines"] for r in rows)
+    held = sum(r["held_lines"] for r in rows)
     summary = {
         "model": args.model, "style": args.style, "rows": rows,
         "checks": total, "failures": failed,
+        "picture_lines": pictures, "block_lines": blocks, "held_lines": held,
         "cost_usd": round(sum(r["cost_usd"] for r in rows), 6),
     }
     json.dump(summary, open(os.path.join(out, "result.json"), "w"), indent=2)
     print(f"\n{total - failed}/{total} checks pass. {failed} failures."
+          f"  {pictures}/{held} lines drawn ({pictures / held * 100 if held else 0:.0f}%,"
+          f" {blocks / held * 100 if held else 0:.0f}% in a block)."
           f"  ${summary['cost_usd']:.5f} total.")
 
 
