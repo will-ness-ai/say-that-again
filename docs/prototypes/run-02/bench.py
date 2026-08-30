@@ -36,8 +36,11 @@ def cached_of(usage):
     return int(details.get("cached_tokens") or 0)
 
 
+CONTEXTS = json.load(open(os.path.join(HERE, "context.json")))
+
+
 def one(name, original, style, model, key):
-    result = pipeline.run(original, style, model, key)
+    result = pipeline.run(original, style, model, key, turns=CONTEXTS.get(name))
     result["name"] = name
     return result
 
@@ -91,6 +94,7 @@ def main():
             "name": name, "pass": record["pass"], "pass_count": len(checks) - len(bad),
             "check_count": len(checks), "missing": [(c[0], c[1]) for c in bad],
             "chars_in": len(original), "chars_out": len(translation),
+            "context_chars": record.get("context_chars", 0),
             "seconds": round(record["seconds"].get("total", 0), 1),
             "cost_usd": round(cost, 6), "prompt_tokens": prompt_tokens,
             "cached_tokens": cached, "diagram_chars": len(record["diagrams"]),

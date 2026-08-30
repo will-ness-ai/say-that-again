@@ -19,31 +19,53 @@ ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
 GATE_CHARS = 200
 DEFAULT_MODEL = "anthropic/claude-haiku-4.5"
 
+# In the repository the skills live under docs/prompts/vendor. An install copies them next to
+# this file instead, so both places are tried.
+VENDOR_DIRS = (os.path.join(HERE, "..", "..", "prompts", "vendor"),
+               os.path.join(HERE, "prompts", "vendor"))
+
+
+def vendored(name):
+    """A third-party skill, word for word. See docs/prompts/vendor/README.md."""
+    for directory in VENDOR_DIRS:
+        path = os.path.join(directory, name)
+        if os.path.exists(path):
+            return open(path).read().strip()
+    raise FileNotFoundError(f"{name} is in none of {VENDOR_DIRS}")
+
+
 # Call 1 is machinery. A style switches it on or off; a style does not change its text.
 # Source: docs/prompts/diagram.md.
-DIAGRAM_ROLE = """You translate text into pictures. A software agent wrote the text below.
-You find the parts that a picture carries better than prose, and you draw those parts.
-You draw only what the text already states."""
+DIAGRAM_ROLE = """You are a technical writer. A software agent has answered a developer, and the
+answer is hard to follow. You help that developer understand it, by drawing the parts of the
+answer that a picture carries better than prose.
 
-DIAGRAM_JOB = """Pick the smallest view that makes a point clear.
+You draw only what the answer already states. You cannot read the repository, so each path,
+name, and step you draw comes from the text itself."""
 
-Draw only what the text states. You cannot read the repository, so each path, name, and step
-you draw comes from the text itself.
+# The `show-me` skill, word for word. Its forms are the whole job of this call.
+DIAGRAM_JOB = vendored("show-me.SKILL.md")
 
-Show logic or an algorithm as pseudocode.
-Show runtime control flow as a call tree.
-Show structure as a component tree.
-Show file responsibility as a shallow file tree.
-Show what changes as a diff, when the text already gives the shape that changes.
-Show a whole block when most of it is new.
+DIAGRAM_FORMAT = """Write nothing but diagrams. Give each one a fenced block, and one line
+directly above the fence that names its point and how it lands:
 
-Fence each diagram. On the line above each fence, write one line that names the point it covers.
+  replaces: <the point it covers>    the diagram carries that point completely, and holds every
+                                     fact of the prose it covers, so that prose can go.
 
-Most text blocks need no picture. Return nothing when no view makes the text clearer. That is a
+  supplements: <the point it covers> the diagram illustrates a point that the prose must still
+                                     make in words.
+
+Most answers need no picture. Return nothing when no view makes the answer clearer. That is a
 correct answer."""
 
-DIAGRAM_INSTRUCTION = "Draw the text in <text-block>."
-TRANSLATE_INSTRUCTION = "Translate the text in <text-block>.\nUse <diagrams> to understand it."
+# The `stop-slop` skill, word for word. It rides with every style.
+STOP_SLOP = vendored("stop-slop.SKILL.md")
+
+DIAGRAM_INSTRUCTION = "Draw the answer in <text-block>.\nUse <context> to understand it."
+TRANSLATE_INSTRUCTION = ("Translate the answer in <text-block>.\n"
+                         "Use <context> and <diagrams> to understand it.")
+CONTEXT_TURNS = 5
+CONTEXT_CHARS = 600
 
 
 class CallFailure(Exception):
@@ -79,12 +101,33 @@ def passes_gate(text_block):
     return len(text_block) > GATE_CHARS
 
 
-def system_message(role, job, glossary=None):
+def system_message(role, job, **blocks):
     """The constant half of a prompt. It does not change between text blocks."""
     parts = [f"<role>\n{role}\n</role>", f"<job>\n{job}\n</job>"]
-    if glossary:
-        parts.append(f"<glossary>\n{glossary}\n</glossary>")
+    for name, body in blocks.items():
+        if body:
+            tag = name.replace("_", "-")
+            parts.append(f"<{tag}>\n{body}\n</{tag}>")
     return "\n\n".join(parts)
+
+
+def context_block(turns):
+    """The tail of the conversation, as the model reads it.
+
+    `turns` is a list of (role, text) pairs, oldest first. The last CONTEXT_TURNS exchanges
+    survive, and each turn is cut to CONTEXT_CHARS so that one long answer upstream cannot
+    crowd out the block it is meant to explain.
+    """
+    if not turns:
+        return ""
+    kept = turns[-(CONTEXT_TURNS * 2):]
+    lines = []
+    for role, text in kept:
+        text = " ".join(text.split())
+        if len(text) > CONTEXT_CHARS:
+            text = text[:CONTEXT_CHARS].rstrip() + " …"
+        lines.append(f"{role}: {text}")
+    return "\n\n".join(lines)
 
 
 def call(model, system, user, key, timeout=90):
@@ -133,14 +176,16 @@ def call(model, system, user, key, timeout=90):
     return content, usage, seconds
 
 
-def draw(text_block, style, model, key, timeout=90):
+def draw(text_block, style, model, key, timeout=90, context=""):
     """Call 1. An empty answer is a correct result, not a fault.
 
-    Whatever comes back goes to call 2 whole. Call 2 holds the original and the answer, so it
-    judges for itself which parts are pictures and which are worth placing.
+    Whatever comes back goes to call 2 whole. Nothing reads or filters it in between - call 2
+    holds both the original and this answer, so it decides which parts are pictures and which
+    are worth placing.
     """
-    system = system_message(DIAGRAM_ROLE, DIAGRAM_JOB)
-    user = f"{DIAGRAM_INSTRUCTION}\n\n<text-block>\n{text_block}\n</text-block>"
+    system = system_message(DIAGRAM_ROLE, DIAGRAM_JOB, output_format=DIAGRAM_FORMAT)
+    user = (f"{DIAGRAM_INSTRUCTION}\n\n<context>\n{context}\n</context>"
+            f"\n\n<text-block>\n{text_block}\n</text-block>")
     try:
         return call(model, system, user, key, timeout)
     except CallFailure as failure:
@@ -149,23 +194,24 @@ def draw(text_block, style, model, key, timeout=90):
         raise
 
 
-def translate(text_block, diagrams, style, model, key, timeout=90):
-    """Call 2. It holds the original, the diagrams, and the pen."""
-    system = system_message(style["role"], style["job"])
-    user = (
-        f"{TRANSLATE_INSTRUCTION}\n\n<text-block>\n{text_block}\n</text-block>"
-        f"\n\n<diagrams>\n{diagrams}\n</diagrams>"
-    )
+def translate(text_block, diagrams, style, model, key, timeout=90, context=""):
+    """Call 2. It holds the original, the context, the diagrams, and the pen."""
+    system = system_message(style["role"], style["job"], stop_slop=STOP_SLOP)
+    user = (f"{TRANSLATE_INSTRUCTION}\n\n<context>\n{context}\n</context>"
+            f"\n\n<text-block>\n{text_block}\n</text-block>"
+            f"\n\n<diagrams>\n{diagrams}\n</diagrams>")
     return call(model, system, user, key, timeout)
 
 
-def run(text_block, style, model=DEFAULT_MODEL, key=None, budget=110.0):
+def run(text_block, style, model=DEFAULT_MODEL, key=None, budget=110.0, turns=None):
     """The whole pipeline for one text block. Returns a record of what happened."""
     key = key or load_key()
+    context = context_block(turns or [])
     record = {
         "model": model,
         "style": style["name"],
         "chars_in": len(text_block),
+        "context_chars": len(context),
         "diagrams": "",
         "translation": "",
         "failure": None,
@@ -176,7 +222,7 @@ def run(text_block, style, model=DEFAULT_MODEL, key=None, budget=110.0):
 
     if style.get("diagrams") == "on":
         try:
-            drawing, usage, seconds = draw(text_block, style, model, key)
+            drawing, usage, seconds = draw(text_block, style, model, key, context=context)
             record["diagrams"] = drawing
             record["usage"]["call1"] = usage
             record["seconds"]["call1"] = seconds
@@ -190,7 +236,8 @@ def run(text_block, style, model=DEFAULT_MODEL, key=None, budget=110.0):
         return record
 
     try:
-        text, usage, seconds = translate(text_block, record["diagrams"], style, model, key, left)
+        text, usage, seconds = translate(text_block, record["diagrams"], style, model, key,
+                                         left, context=context)
         record["translation"] = text
         record["usage"]["call2"] = usage
         record["seconds"]["call2"] = seconds

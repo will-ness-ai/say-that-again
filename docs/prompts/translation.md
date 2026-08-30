@@ -13,8 +13,11 @@ here, in one model call. Nothing between the two calls reads or edits what call 
 
 ```xml
 <role>
-You translate. A software agent wrote the text below for a reader who cannot follow it.
-You carry the same meaning into a style the reader reads.
+You are a technical writer. A software agent has answered a developer, and the answer is hard to
+follow. You help that developer understand it exactly, by carrying the whole answer into a style
+they read.
+
+You translate. The meaning you carry out is the meaning that came in.
 </role>
 ```
 
@@ -47,12 +50,30 @@ Write the translation and nothing else.
 </job>
 ```
 
+## `stop-slop`
+
+The [`stop-slop` skill](vendor/stop-slop.SKILL.md), word for word, in its own block beside the
+`job`. It rides with every style, so a style does not have to restate it.
+
+Two of its rules argue with the `job` above it, and the `job` wins:
+
+- It asks for **varied rhythm**. This project measured that as a no-op — see *Lines that were
+  cut* below.
+- It asks the writer to **name the specific thing**. A translator may not invent a fact that the
+  original never held. See [ADR 0003](../adr/0003-a-translation-not-a-rewrite.md).
+
+Its reference links (`references/phrases.md` and two others) resolve to nothing inside a prompt.
+They are left in, because the file is vendored word for word.
+
 ## `instructions` (the user prompt)
 
 ```xml
-Translate the text in <text-block>.
-Use <diagrams> to understand it.
+Translate the answer in <text-block>.
+Use <context> and <diagrams> to understand it.
 ```
+
+`<context>` holds the last five user and assistant exchanges, each cut to 600 characters. Both
+calls receive the same block.
 
 ## Why each line is here
 
@@ -60,6 +81,7 @@ Each line must change what the model does. A line that the model already obeys p
 
 | Line | The default it beats |
 |---|---|
+| You are a technical writer … understand it exactly | Without a stated goal the model optimises for prose that reads well rather than for a reader who is stuck. "Exactly" is what separates this goal from call 1's. |
 | You translate | The model authors. A translator carries across. See [ADR 0003](../adr/0003-a-translation-not-a-rewrite.md). |
 | new to this topic and competent at their craft | The model writes for an expert, or writes for a beginner programmer. Neither is the reader. |
 | plainest words that still carry it | The model keeps the register of the original. |
@@ -88,14 +110,15 @@ Drafted, then removed for failing the test above.
   invents file paths. This is the exact failure [ADR 0001](../adr/0001-rewrite-rather-than-steer.md) exists to prevent.
 - **"Explain unfamiliar terms on first mention."** To explain a term the model must supply
   knowledge the original never held.
-- **"Use the glossary as a dictionary."** Written before [the context decision](../prototypes/run-02/README.md), verdict 2. No `<glossary>` is sent, so the line pointed at nothing.
+- **"Use the glossary as a dictionary."** No `<glossary>` is sent, so the line pointed at nothing. `<context>` is sent, and it is named in the instructions instead.
 - **"Replace hedged phrases like 'it's worth noting'."** Naming a phrase makes it more available
   to the model, not less. "Plainest words" reaches the same result without saying it.
-- **"A diagram marked replaces-prose carries its point completely … a diagram marked supplements sits beside its prose."** A protocol between two model calls. Call 2 already holds the original and the picture, so it can judge coverage itself, and call 1 emitted the mark in only 9 of 12 runs. "Use the ones that earn their place" replaces both the mark and this line.
+- **"A diagram marked replaces-prose carries its point completely … a diagram marked supplements sits beside its prose."** Cut from *this* prompt, and it stays cut: call 2 holds the original and the picture, so it judges coverage itself through "use the ones that earn their place". The mark itself came back on the call 1 side as an explicit [`<output-format>`](diagram.md) block, where it now lands on every diagram rather than 9 of 12. Call 2 is not told to read it.
 - **"The ask is the last thing you write. No diagram comes after it."** The right rule in the
   wrong place. Written as a late line in a job that had already told the model to put each picture
   beside its point, it lost to that instruction. The same rule, stated once after the picture
   paragraph, took the French arm from 130/134 to 134/134. See [run 02](../prototypes/run-02/README.md).
 - **"Vary sentence length to create rhythm."** Rhythm makes prose sound human. It does not make
-  the reader understand faster.
+  the reader understand faster. `stop-slop` asks for it anyway, in its own words; where the two
+  disagree the `job` wins.
 - **"Avoid sounding like an AI."** A prohibition with no positive target.
