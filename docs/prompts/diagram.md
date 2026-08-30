@@ -27,10 +27,10 @@ name, and step you draw comes from the text itself.
 
 ## `job`
 
-The [`show-me` skill](vendor/show-me.SKILL.md), word for word below its frontmatter, less the
-two forms a terminal cannot show and the line that tells the writer to hold back. It is not
-restated here — the file is the single source of truth, and `pipeline.py` reads it at run time.
-See [what is dropped at read time, and why](vendor/README.md).
+The form menu at [`parts/show-me.md`](parts/show-me.md), sent as written. It is not restated
+here — that file is the single source of truth, and `pipeline.py` reads it at run time. It began
+as the `show-me` skill and was then edited; see [where it came from and what
+changed](parts/README.md).
 
 ## `output-format`
 
@@ -76,18 +76,16 @@ ever defined.
 | You draw only what the answer already states | The model invents plausible file paths and function names to fill a tree. |
 | You cannot read the repository | The model writes as if it had looked, and states its guesses as facts. |
 | the `show-me` skill | The model reaches for one favoured form for every subject. |
-| the menu without Mermaid and HTML | Offered them, the model draws what the reader cannot read. Removing the bullet beats forbidding the form. |
+| the menu without Mermaid and HTML | Offered them, the model draws what the reader cannot read. Deleting the bullet beats forbidding the form. |
 | `replaces:` / `supplements:` | The mark is a claim about fidelity, not a preference. Without it call 2 cannot tell a picture that carries a point from one that only illustrates it. An explicit `<output-format>` block earns a mark on every diagram; the same rule written into prose earned one on 9 of 12. |
 | Draw each part of the answer that has a shape | The model draws one picture and writes the rest of the answer off as prose. Naming the shapes gives it a test to apply to each part. |
 | Words are what is left for the parts that have none | This line replaced *"Most answers need no picture. Return nothing when no view makes the answer clearer."* — a standing licence to draw nothing, in the last position call 1 read. The model needs no permission to write prose; it needs a reason to draw. |
 | The closing question … stays in words | Call 1 drew a card that summarised the whole answer, the ask included. Call 2 then had one picture that covered everything, placed it last, and the reader never reached the question. |
 
-## What the sidecar cuts from the skill
+## What was edited out of the skill
 
-Three cuts, all made when the file is read. The file on disk is untouched. See
-[the vendor notes](vendor/README.md).
-
-Two are forms the sidecar cannot deliver, cut as whole bullets:
+`parts/show-me.md` is a fork, not a copy. Three things were deleted from it, and
+[its README](parts/README.md) records them. Two are forms the sidecar cannot deliver:
 
 - **Mermaid.** It does not render in a terminal. Unrendered, it is a wall of syntax that is worse
   than the prose it replaced.
@@ -97,7 +95,8 @@ Cutting the bullet is the whole fix. A model does not reach for a form the menu 
 and a line saying *no Mermaid* would put Mermaid in the context window on every call. Measured:
 Mermaid appeared in 1 of 16 diagram answers while the bullet was there, and 0 of 16 after.
 
-If a seam is ever found that renders Mermaid, the bullet comes back by deleting one marker. See
+If a seam is ever found that renders Mermaid, the bullet comes back from
+[the digest](../research/show-me-digest.md), which holds the source as it stood. See
 [Where does the sidecar attach, and where does its output go?](https://github.com/will-ness-ai/say-that-again/issues/7).
 
 The third is the closing line of `### guidance`:
@@ -106,6 +105,6 @@ The third is the closing line of `### guidance`:
 > judgement and don't overwhelm the user.
 
 That line was written for an agent that draws one picture beside prose it writes itself. This
-sidecar wants the pictures to carry the answer, so the paragraph goes. The paragraph above it —
+sidecar wants the pictures to carry the answer, so the paragraph is gone. The paragraph above it —
 *keep only the calls, files, props, states, and boundaries needed* — bounds what goes **inside** a
 picture, which is still what we want, so it stays.
