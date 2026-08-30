@@ -25,12 +25,31 @@ VENDOR_DIRS = (os.path.join(HERE, "..", "..", "prompts", "vendor"),
                os.path.join(HERE, "prompts", "vendor"))
 
 
+def without_frontmatter(text):
+    """A skill file without its YAML frontmatter.
+
+    The frontmatter tells a harness when to load a skill. This prompt has already made that
+    decision, so in the context window the block is a name, a description and a trigger that
+    describe work the model is already doing.
+    """
+    if not text.startswith("---"):
+        return text
+    end = text.find("\n---", 3)
+    if end < 0:
+        return text
+    return text[end + 4:].lstrip("\n")
+
+
 def vendored(name):
-    """A third-party skill, word for word. See docs/prompts/vendor/README.md."""
+    """A third-party skill, word for word, less its frontmatter.
+
+    The file on disk stays byte-for-byte what its author published, so it can be checked
+    against the source. See docs/prompts/vendor/README.md.
+    """
     for directory in VENDOR_DIRS:
         path = os.path.join(directory, name)
         if os.path.exists(path):
-            return open(path).read().strip()
+            return without_frontmatter(open(path).read().strip()).strip()
     raise FileNotFoundError(f"{name} is in none of {VENDOR_DIRS}")
 
 
@@ -66,6 +85,9 @@ TRANSLATE_INSTRUCTION = ("Translate the answer in <text-block>.\n"
                          "Use <context> and <diagrams> to understand it.")
 CONTEXT_TURNS = 5
 CONTEXT_CHARS = 600
+TOOL_INPUT_CHARS = 200
+TOOL_RESULT_CHARS = 300
+CONTEXT_TOTAL_CHARS = 6000
 
 
 class CallFailure(Exception):
@@ -114,20 +136,56 @@ def system_message(role, job, **blocks):
 def context_block(turns):
     """The tail of the conversation, as the model reads it.
 
-    `turns` is a list of (role, text) pairs, oldest first. The last CONTEXT_TURNS exchanges
-    survive, and each turn is cut to CONTEXT_CHARS so that one long answer upstream cannot
-    crowd out the block it is meant to explain.
+    `turns` holds entries of two shapes, oldest first:
+
+        ("user" | "assistant", text)
+        ("tool", name, input, result, is_error)
+
+    A tool call is part of the conversation. What the agent read, ran, and got back is often
+    the only place a name in the answer was ever defined.
+
+    The last CONTEXT_TURNS exchanges survive. Prose is cut to CONTEXT_CHARS, a tool call to
+    TOOL_INPUT_CHARS, and its result to TOOL_RESULT_CHARS, so that one long command output
+    cannot crowd out the answer it is meant to explain. The whole block is then held under
+    CONTEXT_TOTAL_CHARS by dropping from the oldest end.
     """
     if not turns:
         return ""
-    kept = turns[-(CONTEXT_TURNS * 2):]
+
+    exchanges = sum(1 for t in turns if t[0] == "user")
+    if exchanges > CONTEXT_TURNS:
+        seen = 0
+        for i, entry in enumerate(turns):
+            if entry[0] == "user":
+                seen += 1
+                if seen == exchanges - CONTEXT_TURNS + 1:
+                    turns = turns[i:]
+                    break
+
+    def clip(text, limit):
+        text = " ".join(str(text).split())
+        return text if len(text) <= limit else text[:limit].rstrip() + " …"
+
     lines = []
-    for role, text in kept:
-        text = " ".join(text.split())
-        if len(text) > CONTEXT_CHARS:
-            text = text[:CONTEXT_CHARS].rstrip() + " …"
-        lines.append(f"{role}: {text}")
-    return "\n\n".join(lines)
+    for entry in turns:
+        kind = entry[0]
+        if kind == "tool":
+            _, name, sent, back, *rest = list(entry) + [False]
+            failed = " (failed)" if rest[0] else ""
+            lines.append(("tool", f"assistant calls {name}: {clip(sent, TOOL_INPUT_CHARS)}\n"
+                                  f"  -> {clip(back, TOOL_RESULT_CHARS)}{failed}"))
+        else:
+            lines.append((kind, f"{kind}: {clip(entry[1], CONTEXT_CHARS)}"))
+
+    # A tool-heavy stretch can hold hundreds of calls, so the oldest tool call goes first and
+    # what a person said goes last. Trimming by age alone drops the reader's own question.
+    def size():
+        return sum(len(x[1]) + 2 for x in lines)
+
+    while len(lines) > 1 and size() > CONTEXT_TOTAL_CHARS:
+        drop = next((i for i, x in enumerate(lines) if x[0] == "tool"), 0)
+        lines.pop(drop)
+    return "\n\n".join(x[1] for x in lines)
 
 
 def call(model, system, user, key, timeout=90):

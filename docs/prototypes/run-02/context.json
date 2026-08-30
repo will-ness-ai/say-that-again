@@ -1,5 +1,5 @@
 {
-  "_note": "Synthetic conversation tails for the run-01 corpus. The corpus stores one user message per sample and no history, so these five exchanges per sample were written to match each sample's topic. They exercise the <context> block; they are not a recording. The live sidecar reads the real transcript instead. See context.py.",
+  "_note": "Synthetic conversation tails for the run-01 corpus. The corpus stores one user message per sample and no history, so these exchanges were written to match each sample's topic. Entries are either [role, text] or [\"tool\", name, input, result, is_error]. They exercise the <context> block; they are not a recording. The live sidecar reads the real transcript instead. See transcript.py.",
   "S1": [
     ["user", "the pillar channels need a visibility command. one command, both directions."],
     ["assistant", "Then the command carries the target state rather than the verb: `/pillar-visibility channel:#x visibility:public|private`. Declaring the state makes the command idempotent, which matters because the same command has to repair drift. Q1 — should it also accept `all` to sweep every pillar channel at once?"],
@@ -8,27 +8,36 @@
     ["user", "one guard for the batch is fine"],
     ["assistant", "Decision 3. Q3 — `/pillar-list` shows the channels today but not their state. Does the list line need to show public or private, and if so does it show both states or only the exception?"],
     ["user", "both states, on every line. a badge."],
-    ["assistant", "Decision 4 recorded. Next is the confirmation step, which is the last open question before the spec is complete. Q5 covers which directions confirm and what the prompt says."],
+    ["tool", "Grep", "read_message_history", "src/commands/pillar-visibility.ts:41:      allow: [PermissionFlagsBits.ReadMessageHistory],\nsrc/permissions.ts:18: * Granting read_message_history to @verified exposes the full backlog.", false],
+    ["tool", "Read", "src/commands/pillar-list.ts", "  const verified = guild.roles.cache.get(VERIFIED_ROLE_ID)\n  const composite = guild.roles.cache.get(COMPOSITE_ROLE_ID)\n  // counts come from the gateway cache, no API call\n  return { verified: verified.members.size, composite: composite.members.size }", false],
+    ["assistant", "Decision 4 recorded. The counts are cheap: `/pillar-list` already reads both role sizes straight off the gateway cache, so a confirmation prompt can show the number without an API round trip. Next is the confirmation step, which is the last open question before the spec is complete."],
     ["user", "agreed"]
   ],
   "S2": [
     ["user", "my toolkit checkout is behaving oddly, git pull says everything is up to date but the new commands are missing"],
-    ["assistant", "That reads like a detached HEAD: `git pull` on a detached HEAD updates nothing, because there is no upstream branch to track. Run `git status` and tell me what the first line says."],
-    ["user", "HEAD detached at f5dd80a"],
-    ["assistant", "Confirmed. `f5dd80a` is the old master tip, so the checkout is pinned to a commit from before the rename. Two things changed upstream since then: the default branch moved, and the CLI entry point was renamed."],
+    ["assistant", "That reads like a detached HEAD: `git pull` on a detached HEAD updates nothing, because there is no upstream branch to track. Let me look."],
+    ["tool", "Bash", "git -C ~/projects/toolkit status --short --branch", "## HEAD (no branch)\n M prototypes/lanes-board.html", false],
+    ["user", "so what is it pointing at"],
+    ["tool", "Bash", "git -C ~/projects/toolkit log -1 --oneline HEAD", "f5dd80a Add lanes board prototype", false],
+    ["tool", "Bash", "git -C ~/projects/toolkit log --oneline master ^HEAD | wc -l", "34", false],
+    ["assistant", "Confirmed. `f5dd80a` is the old master tip, and master has moved 34 commits ahead of it. Two things changed upstream since then: the default branch moved, and the CLI entry point was renamed."],
     ["user", "will I lose my local changes"],
+    ["tool", "Bash", "git -C ~/projects/toolkit diff --stat", " prototypes/lanes-board.html | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)", false],
     ["assistant", "Not from switching branches. You have one small edit in `prototypes/lanes-board.html`, two lines, and `git switch` carries an uncommitted edit across as long as the file has no upstream change on it. It does not."],
     ["user", "How do I update my local toolkit"]
   ],
   "S3": [
     ["user", "I want to record a demo of the route CLI. Walk me through what each tab should show."],
     ["assistant", "Seven tabs, and the recording reads left to right. Tabs 1 to 3 set up the repo, 4 to 6 run the command, and 7 shows the result rendered. Before I lock the script: is `glow` installed, and does it render inline or page?"],
+    ["tool", "Bash", "glow --version && which glow", "glow version 2.1.1\n/opt/homebrew/bin/glow", false],
     ["user", "check tab 7, it should be on screen"],
-    ["assistant", "Tab 7 shows `glow` rendering inline with no pager. I will treat that as the target for every markdown render in the script. Two open questions: what the config file holds before the first command, and whether the group anchor is visible."],
+    ["assistant", "Tab 7 shows `glow` rendering inline with no pager. I will treat that as the target for every markdown render in the script."],
+    ["tool", "Bash", "route --help", "route <command>\n\n  ticket-skill add <name> --when <predicate>\n  frontier list\n  group new <NAME>\n\nConfig is read from .route/config.json", false],
     ["user", "config starts empty. anchor invisible."],
-    ["assistant", "Locked. That leaves the collision rule for duplicate group names, and whether the frontier pane starts empty or seeded."],
+    ["tool", "Bash", "cat demo-repo/.route/config.json", "cat: demo-repo/.route/config.json: No such file or directory", true],
+    ["assistant", "The config file does not exist yet, so the pre-flight step has to write it rather than edit it. Locked. That leaves the collision rule for duplicate group names, and whether the frontier pane starts empty or seeded."],
     ["user", "frontier empty. collisions get a number suffix."],
-    ["assistant", "That completes the spec. I will write it out with the pre-flight, the group behaviour, and the per-tab commands, then confirm the version of `glow` against what tab 7 shows."],
+    ["assistant", "That completes the spec. I will write it out with the pre-flight, the group behaviour, and the per-tab commands."],
     ["user", "1. for that tab do `route --help` and then set up the next command\n2. cat examples.md | glow, it should already be on screen\n3. sure"]
   ],
   "S4": [
@@ -37,7 +46,9 @@
     ["user", "do it. no surveys, I don't want to bother people."],
     ["assistant", "Surveys are out of scope then, and that limits what the study can see. It cannot see direct messages, introductions made, or value that happened offline. Any verdict has a false-negative risk it cannot measure."],
     ["user", "understood. what did the numbers say"],
-    ["assistant", "Posting fell 71% over eight quarters, but the drop is concentrated: three authors account for most of the decline, and the remaining traffic is steady rather than dying. The surface is small and alive, not collapsing."],
+    ["tool", "Bash", "python3 analysis/quarterly.py export/updates.jsonl", "quarter  posts  authors\n2024Q3     412       38\n2025Q1     266       29\n2025Q3     171       22\n2026Q1     120       19", false],
+    ["tool", "Bash", "python3 analysis/concentration.py export/updates.jsonl --top 3", "top 3 authors account for 68% of the decline\nremaining authors: flat within noise since 2025Q1", false],
+    ["assistant", "Posting fell 71% over eight quarters, but the drop is concentrated: three authors account for most of it, and the remaining traffic is steady rather than dying. The surface is small and alive, not collapsing."],
     ["user", "so it's not dead, it's just quiet"],
     ["assistant", "That is the honest reading. Which leaves the verdict itself, and the ticket flags that kill and keep are both easy to write and hard to act on."],
     ["user", "2. I don't want to make this verdict. I'm relying on the intelligence of you, Claude, to do this for me."]

@@ -4,12 +4,18 @@ Third-party skills that go into a prompt **word for word**. `pipeline.py` reads 
 run time, so what the model receives is what is in this directory. Do not edit them to fit the
 project. To change what a call is told, change the blocks around the skill, not the skill.
 
+**The YAML frontmatter is dropped when the file is read.** The file on disk stays byte for byte
+what its author published, so it can be diffed against the source. Frontmatter tells a harness
+*when* to load a skill; this prompt has already made that decision, so in the context window the
+block is a name, a description and a trigger that describe work the model is already doing. It
+costs 451 characters on every call and changes nothing.
+
 Both files carry the MIT licence.
 
 | File | Source | Goes into |
 |---|---|---|
-| `show-me.SKILL.md` | `humanlayer/skills`, `plugins/show-me/skills/show-me/SKILL.md`, commit `6ab9013`, read 2026-08-27 | the whole `<job>` of [call 1](../diagram.md) |
-| `stop-slop.SKILL.md` | `hardikpandya/stop-slop`, `SKILL.md`, read 2026-08-29 | a `<stop-slop>` block beside the `<job>` of [call 2](../translation.md) |
+| `show-me.SKILL.md` | `humanlayer/skills`, `plugins/show-me/skills/show-me/SKILL.md`, commit `6ab9013`, read 2026-08-27 | the whole `<job>` of [call 1](../diagram.md), 3,072 chars in the prompt |
+| `stop-slop.SKILL.md` | `hardikpandya/stop-slop`, `SKILL.md`, read 2026-08-29 | a `<stop-slop>` block beside the `<job>` of [call 2](../translation.md), 2,337 chars in the prompt |
 
 The digest of the first is at [`show-me-digest.md`](../../research/show-me-digest.md).
 
