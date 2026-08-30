@@ -27,8 +27,9 @@ name, and step you draw comes from the text itself.
 
 ## `job`
 
-The [`show-me` skill](vendor/show-me.SKILL.md), word for word, frontmatter included. It is not
+The [`show-me` skill](vendor/show-me.SKILL.md), word for word below its frontmatter. It is not
 restated here — the file is the single source of truth, and `pipeline.py` reads it at run time.
+See [why the frontmatter goes](vendor/README.md).
 
 ## `output-format`
 
@@ -58,8 +59,10 @@ Draw the answer in <text-block>.
 Use <context> to understand it.
 ```
 
-`<context>` holds the last five user and assistant exchanges, each cut to 600 characters. It is
-the only thing that tells call 1 what the conversation was about.
+`<context>` holds the last five exchanges: what the person said, what the agent replied, and
+every tool it ran in between with what came back. It is the only thing that tells call 1 what the
+conversation was about, and the tool results are often the only place a name in the answer was
+ever defined.
 
 ## Why each line is here
 

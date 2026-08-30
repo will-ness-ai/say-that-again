@@ -52,8 +52,8 @@ Write the translation and nothing else.
 
 ## `stop-slop`
 
-The [`stop-slop` skill](vendor/stop-slop.SKILL.md), word for word, in its own block beside the
-`job`. It rides with every style, so a style does not have to restate it.
+The [`stop-slop` skill](vendor/stop-slop.SKILL.md), word for word below its frontmatter, in its
+own block beside the `job`. It rides with every style, so a style does not have to restate it.
 
 Two of its rules argue with the `job` above it, and the `job` wins:
 
@@ -72,8 +72,8 @@ Translate the answer in <text-block>.
 Use <context> and <diagrams> to understand it.
 ```
 
-`<context>` holds the last five user and assistant exchanges, each cut to 600 characters. Both
-calls receive the same block.
+`<context>` holds the last five exchanges: what the person said, what the agent replied, and
+every tool it ran in between with what came back. Both calls receive the same block.
 
 ## Why each line is here
 

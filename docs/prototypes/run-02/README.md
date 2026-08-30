@@ -147,11 +147,28 @@ What the change cost, over two passes on each arm:
 | Prompt tokens per message | ~1,840 | ~4,200 |
 | Cost per message | $0.0065 | $0.0084 |
 
+Then the frontmatter was dropped from both skills (451 characters saved on every call) and the tool calls were added to `<context>`. The two roughly cancel: English 132/134, French 131/134, ~4,300 prompt tokens per message.
+
 The fidelity risk the recommendation named did not appear: no translation pulled a fact out of `<context>` that the text block did not hold. The bill did move, and the two changes are entangled — `<context>` and the vendored skills landed together — so no part of the 29 % is attributable to one of them alone.
 
 No glossary is sent. That half of the recommendation stands.
 
-The corpus stores no conversation history, so the context used by the bench is **synthetic**: five exchanges written per sample to match its topic, in [`context.json`](context.json). The live sidecar reads the real transcript.
+`<context>` carries the **tool calls too**. What the agent ran and what came back is part of the conversation, and it is often the only place a name in the answer was ever defined: the S1 sample asserts that the bot counts role holders off the gateway cache, and the only evidence for that in the whole session is a `Read` of `pillar-list.ts`.
+
+The transcript makes this cheap. Each JSONL record of type `assistant` carries `tool_use` blocks, and each result comes back as a `type: "user"` record holding `tool_result` blocks, joined by `tool_use_id`. [`transcript.py`](transcript.py) walks it and skips `thinking`, which the reader never saw.
+
+Four caps hold the block down, because a tool-heavy stretch is unbounded — one measured stretch of five exchanges in this project's own transcript held **193 entries**:
+
+| Cap | Value |
+|---|---|
+| prose turn | 600 chars |
+| tool call | 200 chars |
+| tool result | 300 chars |
+| whole block | 6,000 chars |
+
+The total cap drops the **oldest tool call** before it drops anything a person said. Trimming by age alone threw away the reader's own question and kept a wall of `git` commands.
+
+The corpus stores no conversation history, so the context used by the bench is **synthetic**: exchanges written per sample to match its topic, with tool calls, in [`context.json`](context.json). The live sidecar reads the real transcript.
 
 ### 3. Where the fidelity rules live
 
