@@ -26,6 +26,7 @@ The first run of the whole sidecar against a running harness. It answers [Protot
 | `styles/bare.json` | The same style with the fidelity rules deleted. The test for verdict 3. |
 | `styles/french.json` | The same style, written in French. The test for verdict 5 — an English style cannot show a language seam. |
 | `bench.py` | Runs the run 01 corpus through the real pipeline, and scores it with the run 01 check. |
+| `../../prompts/parts/` | The two blocks of prompt text both calls read at run time. |
 | `settings.sh`, `run-tty.sh` | Write the settings file, and drive a live terminal through `tmux`. |
 | `out/` | The translations and the scores of each corpus arm. |
 
@@ -140,7 +141,7 @@ Run 01 finding 7 reached the same result from the other side: S1 and S3 ran with
 
 What the change cost, over two passes on each arm:
 
-| | Without context | With context, and the two vendored skills |
+| | Without context | With context, and the two skills |
 |---|---|---|
 | English, `plain` | 200/201 | 133/134 |
 | French | 134/134 | 132/134 |
@@ -408,7 +409,7 @@ Five changes, made together, to move the answer from paragraphs to pictures.
 |---|---|---|
 | 1 | style `job` | Call 2 reads the `replaces:` / `supplements:` mark. Call 1 had emitted it on every diagram since the last merge and nothing consumed it. See [the line that came back](../../prompts/translation.md#the-line-that-came-back). |
 | 2 | `<output-format>` | *"Most answers need no picture. Return nothing …"* — a licence to draw nothing, in the last position call 1 read — becomes a list of the shapes that get drawn. |
-| 3 | `vendored()` | `show-me`'s closing *"it is unlikely you will use all of them … don't overwhelm the user"* is cut at read time, by the same mechanism as the two undrawable forms. The paragraph that bounds what goes *inside* a picture stays. |
+| 3 | `parts/show-me.md` | `show-me`'s closing *"it is unlikely you will use all of them … don't overwhelm the user"* is deleted, like the two undrawable forms before it. The paragraph that bounds what goes *inside* a picture stays. |
 | 4 | style `job` | The `<diagrams>` paragraph states the goal: let the pictures carry as much of the answer as they can, and words are what is left. |
 | 5 | `bench.py` | A metric. Nothing had ever measured how much of an answer is a picture, so no change to this end could be judged. |
 

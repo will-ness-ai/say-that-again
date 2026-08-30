@@ -19,100 +19,19 @@ ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
 GATE_CHARS = 200
 DEFAULT_MODEL = "anthropic/claude-haiku-4.5"
 
-# In the repository the skills live under docs/prompts/vendor. An install copies them next to
-# this file instead, so both places are tried.
-VENDOR_DIRS = (os.path.join(HERE, "..", "..", "prompts", "vendor"),
-               os.path.join(HERE, "prompts", "vendor"))
+# In the repository the prompt parts live under docs/prompts/parts. An install copies them next
+# to this file instead, so both places are tried.
+PART_DIRS = (os.path.join(HERE, "..", "..", "prompts", "parts"),
+             os.path.join(HERE, "prompts", "parts"))
 
 
-def without_frontmatter(text):
-    """A skill file without its YAML frontmatter.
-
-    The frontmatter tells a harness when to load a skill. This prompt has already made that
-    decision, so in the context window the block is a name, a description and a trigger that
-    describe work the model is already doing.
-    """
-    if not text.startswith("---"):
-        return text
-    end = text.find("\n---", 3)
-    if end < 0:
-        return text
-    return text[end + 4:].lstrip("\n")
-
-
-# Forms that `show-me` offers and this sidecar cannot deliver. Mermaid does not render in a
-# terminal, and unrendered it is a wall of syntax that is worse than the prose it replaced. The
-# HTML form ends in `Bash(open ...)`, and a sidecar has no shell. Cutting the bullets is what
-# removes them: a model does not reach for a form the menu never showed it, and a line saying
-# "no Mermaid" would put Mermaid in the context window on every call.
-UNDRAWABLE = ("with Mermaid", "write one focused HTML file")
-
-
-def without_forms(text, markers):
-    """A menu without the bullets that name `markers`.
-
-    A bullet runs from its own `- ` line to the next `- ` line or `###` heading, so its worked
-    example travels with it.
-    """
-    lines = text.split("\n")
-    edges, fenced = [], False
-    for i, line in enumerate(lines):
-        if line.startswith("```"):
-            fenced = not fenced
-        elif not fenced and (line.startswith("- ") or line.startswith("###")):
-            # A `- ` inside a fence is a diff removal, not a bullet.
-            edges.append(i)
-    edges.append(len(lines))
-    drop = set()
-    for start, stop in zip(edges, edges[1:]):
-        if lines[start].startswith("- ") and any(m in lines[start] for m in markers):
-            drop.update(range(start, stop))
-    return "\n".join(line for i, line in enumerate(lines) if i not in drop).strip()
-
-
-# `show-me` closes by telling the writer to hold back. That line was written for an agent that
-# draws one picture beside its prose. This sidecar wants the pictures to carry the answer, so
-# the paragraph goes. The paragraph above it, which bounds what goes inside a picture, stays.
-RESTRAINT = ("it is unlikely you will use all of them",)
-
-
-def without_paragraphs(text, markers):
-    """A document without the paragraphs that name `markers`.
-
-    A paragraph runs to the next blank line outside a fence, so a fenced block travels whole.
-    """
-    groups, current, fenced = [], [], False
-    for line in text.split("\n"):
-        if line.startswith("```"):
-            fenced = not fenced
-        elif not fenced and not line.strip():
-            groups.append(current)
-            current = []
-            continue
-        current.append(line)
-    groups.append(current)
-    kept = ["\n".join(g).strip("\n") for g in groups]
-    return "\n\n".join(p for p in kept
-                        if p.strip() and not any(m in p for m in markers)).strip()
-
-
-def vendored(name, drop=(), unsay=()):
-    """A third-party skill, word for word, less its frontmatter, forms, and paragraphs.
-
-    The file on disk stays byte-for-byte what its author published, so it can be checked
-    against the source. Every edit happens here, once, and is named. See
-    docs/prompts/vendor/README.md.
-    """
-    for directory in VENDOR_DIRS:
+def part(name):
+    """A block of prompt text, as written. See docs/prompts/parts/README.md."""
+    for directory in PART_DIRS:
         path = os.path.join(directory, name)
         if os.path.exists(path):
-            text = without_frontmatter(open(path).read().strip()).strip()
-            if drop:
-                text = without_forms(text, drop)
-            if unsay:
-                text = without_paragraphs(text, unsay)
-            return text
-    raise FileNotFoundError(f"{name} is in none of {VENDOR_DIRS}")
+            return open(path).read().strip()
+    raise FileNotFoundError(f"{name} is in none of {PART_DIRS}")
 
 
 # Call 1 is machinery. A style switches it on or off; a style does not change its text.
@@ -124,9 +43,8 @@ answer that a picture carries better than prose.
 You draw only what the answer already states. You cannot read the repository, so each path,
 name, and step you draw comes from the text itself."""
 
-# The `show-me` skill, less the two forms a terminal cannot show and the line that tells the
-# writer to hold back. Its remaining forms are the whole job of this call.
-DIAGRAM_JOB = vendored("show-me.SKILL.md", drop=UNDRAWABLE, unsay=RESTRAINT)
+# The form menu. It is the whole job of this call.
+DIAGRAM_JOB = part("show-me.md")
 
 DIAGRAM_FORMAT = """Write nothing but diagrams. Give each one a fenced block, and one line
 directly above the fence that names its point and how it lands:
@@ -143,8 +61,8 @@ for the parts that have none, so draw first and leave the words little to carry.
 
 The closing question or recommendation of an answer stays in words. Draw what leads up to it."""
 
-# The `stop-slop` skill, word for word. It rides with every style.
-STOP_SLOP = vendored("stop-slop.SKILL.md")
+# Rides with every style, beside the job.
+STOP_SLOP = part("stop-slop.md")
 
 DIAGRAM_INSTRUCTION = "Draw the answer in <text-block>.\nUse <context> to understand it."
 TRANSLATE_INSTRUCTION = ("Translate the answer in <text-block>.\n"

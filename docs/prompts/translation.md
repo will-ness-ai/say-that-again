@@ -61,8 +61,9 @@ Write the translation and nothing else.
 
 ## `stop-slop`
 
-The [`stop-slop` skill](vendor/stop-slop.SKILL.md), word for word below its frontmatter, in its
-own block beside the `job`. It rides with every style, so a style does not have to restate it.
+[`parts/stop-slop.md`](parts/stop-slop.md), in its own block beside the `job`. It rides with
+every style, so a style does not have to restate it. It began as the `stop-slop` skill; see
+[where it came from](parts/README.md).
 
 Two of its rules argue with the `job` above it, and the `job` wins:
 
@@ -72,7 +73,7 @@ Two of its rules argue with the `job` above it, and the `job` wins:
   original never held. See [ADR 0003](../adr/0003-a-translation-not-a-rewrite.md).
 
 Its reference links (`references/phrases.md` and two others) resolve to nothing inside a prompt.
-They are left in, because the file is vendored word for word.
+They are left in because nothing has measured whether removing them changes an answer.
 
 ## `instructions` (the user prompt)
 
