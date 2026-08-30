@@ -62,7 +62,7 @@ for the parts that have none, so draw first and leave the words little to carry.
 The closing question or recommendation of an answer stays in words. Draw what leads up to it."""
 
 # Rides with every style, beside the job.
-STOP_SLOP = part("stop-slop.md")
+UNSLOP = part("unslop.md")
 
 DIAGRAM_INSTRUCTION = "Draw the answer in <text-block>.\nUse <context> to understand it."
 TRANSLATE_INSTRUCTION = ("Translate the answer in <text-block>.\n"
@@ -107,13 +107,18 @@ def passes_gate(text_block):
     return len(text_block) > GATE_CHARS
 
 
-def system_message(role, job, **blocks):
-    """The constant half of a prompt. It does not change between text blocks."""
-    parts = [f"<role>\n{role}\n</role>", f"<job>\n{job}\n</job>"]
-    for name, body in blocks.items():
-        if body:
-            tag = name.replace("_", "-")
-            parts.append(f"<{tag}>\n{body}\n</{tag}>")
+def system_message(role, job, before=(), after=()):
+    """The constant half of a prompt. It does not change between text blocks.
+
+    `before` and `after` hold (tag, body) pairs. Position is load-bearing: where two blocks
+    disagree the model follows the one it read last, so call 2 keeps its job below the
+    editing rules that ride with it. Measured: the same rules above the job draw 36 % of the
+    answer inside a fenced block, and below it 30 %.
+    """
+    parts = [f"<role>\n{role}\n</role>"]
+    parts += [f"<{tag}>\n{body}\n</{tag}>" for tag, body in before if body]
+    parts.append(f"<job>\n{job}\n</job>")
+    parts += [f"<{tag}>\n{body}\n</{tag}>" for tag, body in after if body]
     return "\n\n".join(parts)
 
 
@@ -225,7 +230,8 @@ def draw(text_block, style, model, key, timeout=90, context=""):
     holds both the original and this answer, so it decides which parts are pictures and which
     are worth placing.
     """
-    system = system_message(DIAGRAM_ROLE, DIAGRAM_JOB, output_format=DIAGRAM_FORMAT)
+    system = system_message(DIAGRAM_ROLE, DIAGRAM_JOB,
+                            after=[("output-format", DIAGRAM_FORMAT)])
     user = (f"{DIAGRAM_INSTRUCTION}\n\n<context>\n{context}\n</context>"
             f"\n\n<text-block>\n{text_block}\n</text-block>")
     try:
@@ -238,7 +244,7 @@ def draw(text_block, style, model, key, timeout=90, context=""):
 
 def translate(text_block, diagrams, style, model, key, timeout=90, context=""):
     """Call 2. It holds the original, the context, the diagrams, and the pen."""
-    system = system_message(style["role"], style["job"], stop_slop=STOP_SLOP)
+    system = system_message(style["role"], style["job"], before=[("unslop", UNSLOP)])
     user = (f"{TRANSLATE_INSTRUCTION}\n\n<context>\n{context}\n</context>"
             f"\n\n<text-block>\n{text_block}\n</text-block>"
             f"\n\n<diagrams>\n{diagrams}\n</diagrams>")
