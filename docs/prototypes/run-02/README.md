@@ -52,7 +52,7 @@ Copy `pipeline.py`, `sidecar.py`, `discard.py`, `styles/` and a `hook.sh` that s
 
 One setting differs from the measurement runs: `STA_DETECT` is `on`, so the sidecar spends nothing when the harness will discard its answer. `diagrams` stays `on` — the author ruled it, and the picture is the point.
 
-**The prompts changed after the measurement runs.** See [the prompt rewrite](#the-prompt-rewrite) below, so a re-run of `bench.py` will not reproduce the tables above exactly. The scores after the rewrite: **200/201** on the English arm and **134/134** on the French arm, against 198/201 and 130/134 before it.
+**The prompts changed twice after the measurement runs**, so a re-run of `bench.py` will not reproduce the tables above exactly. See [the prompt rewrite](#the-prompt-rewrite) and then [diagrams first](#diagrams-first). The shipped scores, four passes per arm: **254/268** on the English arm and **263/268** on the French arm, with 41 % and 43 % of the answer inside a fenced picture.
 
 Installing found two faults that the probes hid, and both are fixed here:
 
@@ -393,6 +393,85 @@ line was added to held a dead glossary paragraph, a duplicated fact list, two ov
 about fences, and a protocol for a mark that arrived two-thirds of the time. That is not a fair
 test, and the conclusion drawn from it — *build the machinery* — would have shipped code for a
 defect that one moved sentence fixes.
+
+---
+
+## Diagrams first
+
+The rewrite above left a pipeline that drew well and printed prose. Call 1 returned a diagram on
+**every one of 32 runs**, and in 13 of 16 English runs not one fenced block reached the reader.
+The pictures were being drawn, marked, handed over, and dropped.
+
+Five changes, made together, to move the answer from paragraphs to pictures.
+
+| # | Where | Change |
+|---|---|---|
+| 1 | style `job` | Call 2 reads the `replaces:` / `supplements:` mark. Call 1 had emitted it on every diagram since the last merge and nothing consumed it. See [the line that came back](../../prompts/translation.md#the-line-that-came-back). |
+| 2 | `<output-format>` | *"Most answers need no picture. Return nothing …"* — a licence to draw nothing, in the last position call 1 read — becomes a list of the shapes that get drawn. |
+| 3 | `vendored()` | `show-me`'s closing *"it is unlikely you will use all of them … don't overwhelm the user"* is cut at read time, by the same mechanism as the two undrawable forms. The paragraph that bounds what goes *inside* a picture stays. |
+| 4 | style `job` | The `<diagrams>` paragraph states the goal: let the pictures carry as much of the answer as they can, and words are what is left. |
+| 5 | `bench.py` | A metric. Nothing had ever measured how much of an answer is a picture, so no change to this end could be judged. |
+
+Change 5 came first, and it corrected the premise. Counting only fenced lines put the answers at
+29%; counting every shaped line — a fence, a bullet, a numbered step, a table row — put the same
+answers at 72%. Both numbers are now reported, because they separate two results: a model that
+turns each paragraph into a bullet lifts the first and leaves the second flat.
+
+### What it moved
+
+Four passes per arm, 16 runs each, both arms run in one session against the same corpus and the
+same [run 01 check](../run-01/check.py).
+
+| Arm | | Before | After |
+|---|---|---|---|
+| English `plain` | inside a fenced block | **4%** | **41%** |
+| | any shape | 58% | 64% |
+| | fidelity | 259/268 | 254/268 |
+| French | inside a fenced block | 46% | 43% |
+| | any shape | 75% | 67% |
+| | fidelity | 261/268 | **263/268** |
+
+The English arm is the whole result: 12 lines of picture across 16 runs became 193. The French
+arm was already drawing — a translator rebuilds every line, so it had been placing call 1's work
+all along — and it did not move. What French gained was fidelity, and the eaten ask fell from 3 in
+8 runs to 1 in 16.
+
+### What it cost
+
+English fidelity fell 259 → 254 of 268, and the misses concentrate on S3, the densest sample:
+`route --help`, `DEMO 2`, `45.html`, the list numbers `1.` and `2.`. This is the predicted hazard.
+`replaces:` is call 1's **claim** that a picture holds every fact of the prose it covers, and
+nothing verifies that claim. Obeyed, it sometimes deletes a fact the picture only appeared to
+carry.
+
+Two guards were measured and both are in. Neither closes the gap.
+
+- *When a `replaces:` picture leaves out a name, a number, a path, or a command, keep the words
+  that hold it* — the check written as a condition on the cut.
+- A closing check, in the last position the model reads, that names what must survive and where
+  the ask goes.
+
+The honest reading is that a 1.9-point fidelity cost bought a tenfold rise in how much of the
+answer the reader takes in at a glance. Whether that trade is the right one is a call for
+[verdict 4](#4-how-much-text-the-reader-gets), not for this section.
+
+### Two things that were wrong on the way
+
+**Placement cannot be conditional.** The first draft told call 2 to test the `replaces:` claim
+*and then* write the picture. The model failed its own test and dropped the picture — 11 of 32
+runs reached the reader with nothing drawn. The picture goes in unconditionally; the claim decides
+only what happens to the prose beside it.
+
+**The ask gets worse as the prose shrinks.** More pictures means more chances for the closing
+question to end up under one, and the French arm regressed to 3 eaten asks in 8 runs before it was
+fixed. It is now guarded from both ends: call 1 is told the closing question stays in words, and
+call 2 carries it in a closing check rather than a mid-`job` rule.
+
+### Still open
+
+S4's ask is the same defect this run has been carrying throughout: call 1 draws a card that
+summarises the whole answer, so there is no single point for it to sit beside. One English run in
+16 and one French run in 16 still end under a picture.
 
 ---
 
