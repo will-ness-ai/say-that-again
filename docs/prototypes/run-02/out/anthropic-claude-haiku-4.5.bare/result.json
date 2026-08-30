@@ -14,12 +14,12 @@
         ]
       ],
       "chars_in": 2115,
-      "chars_out": 3529,
-      "seconds": 10.7,
-      "cost_usd": 0.007563,
-      "prompt_tokens": 1798,
+      "chars_out": 2338,
+      "seconds": 9.9,
+      "cost_usd": 0.006375,
+      "prompt_tokens": 1785,
       "cached_tokens": 0,
-      "diagram_chars": 1488,
+      "diagram_chars": 955,
       "failure": null
     },
     {
@@ -29,64 +29,42 @@
       "check_count": 12,
       "missing": [],
       "chars_in": 848,
-      "chars_out": 1295,
-      "seconds": 5.2,
-      "cost_usd": 0.004056,
-      "prompt_tokens": 1126,
+      "chars_out": 1098,
+      "seconds": 3.8,
+      "cost_usd": 0.002833,
+      "prompt_tokens": 1028,
       "cached_tokens": 0,
-      "diagram_chars": 516,
+      "diagram_chars": 221,
       "failure": null
     },
     {
       "name": "S3",
       "pass": 0,
-      "pass_count": 35,
+      "pass_count": 39,
       "check_count": 39,
-      "missing": [
-        [
-          "backtick",
-          "DEMO 2"
-        ],
-        [
-          "backtick",
-          "DEMO 3"
-        ],
-        [
-          "backtick",
-          "surface:199"
-        ],
-        [
-          "number",
-          "199"
-        ]
-      ],
+      "missing": [],
       "chars_in": 1951,
-      "chars_out": 2247,
-      "seconds": 11.6,
-      "cost_usd": 0.009294,
-      "prompt_tokens": 2484,
+      "chars_out": 1918,
+      "seconds": 17.2,
+      "cost_usd": 0.010655,
+      "prompt_tokens": 2790,
       "cached_tokens": 0,
-      "diagram_chars": 1293,
+      "diagram_chars": 2641,
       "failure": null
     },
     {
       "name": "S4",
       "pass": 0,
-      "pass_count": 4,
+      "pass_count": 5,
       "check_count": 5,
-      "missing": [
-        [
-          "label",
-          "Q3"
-        ]
-      ],
+      "missing": [],
       "chars_in": 1644,
-      "chars_out": 1284,
-      "seconds": 7.1,
-      "cost_usd": 0.003687,
-      "prompt_tokens": 1412,
+      "chars_out": 1519,
+      "seconds": 6.0,
+      "cost_usd": 0.003915,
+      "prompt_tokens": 1425,
       "cached_tokens": 0,
-      "diagram_chars": 681,
+      "diagram_chars": 574,
       "failure": null
     },
     {
@@ -101,12 +79,12 @@
         ]
       ],
       "chars_in": 2115,
-      "chars_out": 3056,
-      "seconds": 10.2,
-      "cost_usd": 0.007386,
-      "prompt_tokens": 1791,
+      "chars_out": 1964,
+      "seconds": 8.9,
+      "cost_usd": 0.005624,
+      "prompt_tokens": 1794,
       "cached_tokens": 0,
-      "diagram_chars": 1117,
+      "diagram_chars": 995,
       "failure": null
     },
     {
@@ -116,32 +94,27 @@
       "check_count": 12,
       "missing": [],
       "chars_in": 848,
-      "chars_out": 853,
-      "seconds": 4.3,
-      "cost_usd": 0.003329,
-      "prompt_tokens": 1134,
+      "chars_out": 1243,
+      "seconds": 4.5,
+      "cost_usd": 0.003775,
+      "prompt_tokens": 1135,
       "cached_tokens": 0,
-      "diagram_chars": 589,
+      "diagram_chars": 522,
       "failure": null
     },
     {
       "name": "S3",
       "pass": 1,
-      "pass_count": 38,
+      "pass_count": 39,
       "check_count": 39,
-      "missing": [
-        [
-          "backtick",
-          "route --help"
-        ]
-      ],
+      "missing": [],
       "chars_in": 1951,
-      "chars_out": 2181,
-      "seconds": 11.7,
-      "cost_usd": 0.008775,
-      "prompt_tokens": 2400,
+      "chars_out": 2122,
+      "seconds": 14.4,
+      "cost_usd": 0.011131,
+      "prompt_tokens": 2831,
       "cached_tokens": 0,
-      "diagram_chars": 1118,
+      "diagram_chars": 2716,
       "failure": null
     },
     {
@@ -156,16 +129,16 @@
         ]
       ],
       "chars_in": 1644,
-      "chars_out": 1575,
-      "seconds": 8.4,
-      "cost_usd": 0.004247,
-      "prompt_tokens": 1442,
+      "chars_out": 1286,
+      "seconds": 6.5,
+      "cost_usd": 0.004548,
+      "prompt_tokens": 1568,
       "cached_tokens": 0,
-      "diagram_chars": 757,
+      "diagram_chars": 1020,
       "failure": null
     }
   ],
   "checks": 134,
-  "failures": 9,
-  "cost_usd": 0.048337
+  "failures": 3,
+  "cost_usd": 0.048856
 }
