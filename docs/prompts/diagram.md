@@ -16,55 +16,70 @@ The unit is one **text block** that passed the gate, not a whole message. See [A
 
 ```xml
 <role>
-You translate text into pictures. A software agent wrote the text below.
-You find the parts that a picture carries better than prose, and you draw those parts.
-You draw only what the text already states.
+You are a technical writer. A software agent has answered a developer, and the
+answer is hard to follow. You help that developer understand it, by drawing the parts of the
+answer that a picture carries better than prose.
+
+You draw only what the answer already states. You cannot read the repository, so each path,
+name, and step you draw comes from the text itself.
 </role>
 ```
 
 ## `job`
 
+The [`show-me` skill](vendor/show-me.SKILL.md), word for word, frontmatter included. It is not
+restated here — the file is the single source of truth, and `pipeline.py` reads it at run time.
+
+## `output-format`
+
+`show-me` has no output contract, because it assumes the agent that draws is the agent that
+writes. Call 1 hands its pictures to call 2, so this block is ours:
+
 ```xml
-<job>
-Pick the smallest view that makes a point clear.
+<output-format>
+Write nothing but diagrams. Give each one a fenced block, and one line
+directly above the fence that names its point and how it lands:
 
-Draw only what the text states. You cannot read the repository, so each path, name, and step
-you draw comes from the text itself.
+  replaces: <the point it covers>    the diagram carries that point completely, and holds every
+                                     fact of the prose it covers, so that prose can go.
 
-Show logic or an algorithm as pseudocode.
-Show runtime control flow as a call tree.
-Show structure as a component tree.
-Show file responsibility as a shallow file tree.
-Show what changes as a diff, when the text already gives the shape that changes.
-Show a whole block when most of it is new.
+  supplements: <the point it covers> the diagram illustrates a point that the prose must still
+                                     make in words.
 
-Fence each diagram. On the line above each fence, write one line that names the point it covers.
-
-Most text blocks need no picture. Return nothing when no view makes the text clearer. That is a
+Most answers need no picture. Return nothing when no view makes the answer clearer. That is a
 correct answer.
-</job>
+</output-format>
 ```
 
 ## `instructions` (the user prompt)
 
 ```xml
-Draw the text in <text-block>.
+Draw the answer in <text-block>.
+Use <context> to understand it.
 ```
+
+`<context>` holds the last five user and assistant exchanges, each cut to 600 characters. It is
+the only thing that tells call 1 what the conversation was about.
 
 ## Why each line is here
 
 | Line | The default it beats |
 |---|---|
-| the smallest view | The model draws the whole system when one branch was the point. |
-| only what the text states | The model invents plausible file paths and function names to fill a tree. |
+| You are a technical writer … help that developer understand it | Without a stated goal the model optimises for a handsome diagram rather than for a reader who is stuck. |
+| You draw only what the answer already states | The model invents plausible file paths and function names to fill a tree. |
 | You cannot read the repository | The model writes as if it had looked, and states its guesses as facts. |
-| the six `Show` lines | The model reaches for one favoured form for every subject. |
-| Fence each diagram | Unfenced output is unusable to call 2 and to the renderer. |
-| one line that names the point | Call 2 must match each picture to a place in the prose. |
-| Most text blocks need no picture | The skill this menu comes from assumes a human asked for a picture. This call fires on every text block. |
+| the `show-me` skill | The model reaches for one favoured form for every subject. |
+| `replaces:` / `supplements:` | The mark is a claim about fidelity, not a preference. Without it call 2 cannot tell a picture that carries a point from one that only illustrates it. An explicit `<output-format>` block earns a mark on every diagram; the same rule written into prose earned one on 9 of 12. |
 | Return nothing … a correct answer | The model treats an empty response as failure and produces a weak diagram instead. |
 
-## What was left out of the menu
+## What the skill offers that a terminal cannot show
 
-- **HTML.** The source skill writes one HTML file and opens it with a shell command. A sidecar has no shell, and a browser window for each text block is wrong.
-- **Mermaid.** Mermaid does not render in a terminal. Unrendered, it is a wall of syntax that the reader cannot read, which is worse than the prose it replaced. [Where does the sidecar attach, and where does its output go?](https://github.com/will-ness-ai/say-that-again/issues/7) must say whether any seam can render it. If one can, Mermaid returns to the menu for component interaction and data flow.
+`show-me` is used unedited, so call 1 is offered two forms the sidecar cannot deliver:
+
+- **Mermaid.** It does not render in a terminal. Unrendered, it is a wall of syntax that is worse
+  than the prose it replaced. Call 1 drew one in 1 of 16 runs, and call 2 passed it to the reader
+  unchanged, because nothing in either prompt says where the output goes.
+- **One HTML file**, which the skill opens with `Bash(open …)`. A sidecar has no shell.
+
+Neither is filtered in code. Whether to bound them in the prompt, and whether any seam can render
+Mermaid, is open — see [Where does the sidecar attach, and where does its output go?](https://github.com/will-ness-ai/say-that-again/issues/7).

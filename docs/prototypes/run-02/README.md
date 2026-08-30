@@ -134,6 +134,25 @@ Run 01 finding 7 reached the same result from the other side: S1 and S3 ran with
 
 **Recommendation: send no conversation context, and send no glossary.** Context is not free — it is the input half of the bill, it is a new way for a fact to enter a translation that the original never held, and it makes the fidelity check untraceable.
 
+#### The author overruled this
+
+`<context>` now goes to **both** calls: the last five user and assistant exchanges, each cut to 600 characters. The recommendation above measured only whether context was *needed* to keep the facts. It was not. What it never measured is whether context makes the translation better to read, which is the reason it was asked for.
+
+What the change cost, over two passes on each arm:
+
+| | Without context | With context, and the two vendored skills |
+|---|---|---|
+| English, `plain` | 200/201 | 133/134 |
+| French | 134/134 | 132/134 |
+| Prompt tokens per message | ~1,840 | ~4,200 |
+| Cost per message | $0.0065 | $0.0084 |
+
+The fidelity risk the recommendation named did not appear: no translation pulled a fact out of `<context>` that the text block did not hold. The bill did move, and the two changes are entangled — `<context>` and the vendored skills landed together — so no part of the 29 % is attributable to one of them alone.
+
+No glossary is sent. That half of the recommendation stands.
+
+The corpus stores no conversation history, so the context used by the bench is **synthetic**: five exchanges written per sample to match its topic, in [`context.json`](context.json). The live sidecar reads the real transcript.
+
 ### 3. Where the fidelity rules live
 
 **In machinery. A style must not be able to delete them.**

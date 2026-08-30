@@ -12,6 +12,7 @@ Environment:
   STA_STYLE    style name or path, default `plain`
   STA_MODEL    model id, default anthropic/claude-haiku-4.5
   STA_DETECT   `on` to stand down when a discard mode is found, default `off`
+  STA_CONTEXT  `off` to send no conversation tail, default `on`
 """
 
 import json
@@ -24,6 +25,7 @@ sys.path.insert(0, HERE)
 
 import discard  # noqa: E402
 import pipeline  # noqa: E402
+import transcript  # noqa: E402
 
 SEPARATOR = "───────────── say that again ─────────────"
 STATE = os.environ.get("STA_STATE") or os.path.join(HERE, "state")
@@ -98,7 +100,9 @@ def main():
     try:
         style = pipeline.load_style(os.environ.get("STA_STYLE") or "plain")
         model = os.environ.get("STA_MODEL") or pipeline.DEFAULT_MODEL
-        result = pipeline.run(text_block, style, model)
+        turns = ([] if os.environ.get("STA_CONTEXT") == "off"
+                 else transcript.tail(payload, pipeline.CONTEXT_TURNS * 2))
+        result = pipeline.run(text_block, style, model, turns=turns)
     except pipeline.CallFailure as failure:
         record["event"] = "fail-open"
         record["failure"] = failure.cls
