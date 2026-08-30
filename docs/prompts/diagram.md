@@ -27,8 +27,8 @@ name, and step you draw comes from the text itself.
 
 ## `job`
 
-The [`show-me` skill](vendor/show-me.SKILL.md), word for word below its frontmatter. It is not
-restated here — the file is the single source of truth, and `pipeline.py` reads it at run time.
+The [`show-me` skill](vendor/show-me.SKILL.md), word for word below its frontmatter and less the
+two forms a terminal cannot show. It is not restated here — the file is the single source of truth, and `pipeline.py` reads it at run time.
 See [why the frontmatter goes](vendor/README.md).
 
 ## `output-format`
@@ -72,17 +72,22 @@ ever defined.
 | You draw only what the answer already states | The model invents plausible file paths and function names to fill a tree. |
 | You cannot read the repository | The model writes as if it had looked, and states its guesses as facts. |
 | the `show-me` skill | The model reaches for one favoured form for every subject. |
+| the menu without Mermaid and HTML | Offered them, the model draws what the reader cannot read. Removing the bullet beats forbidding the form. |
 | `replaces:` / `supplements:` | The mark is a claim about fidelity, not a preference. Without it call 2 cannot tell a picture that carries a point from one that only illustrates it. An explicit `<output-format>` block earns a mark on every diagram; the same rule written into prose earned one on 9 of 12. |
 | Return nothing … a correct answer | The model treats an empty response as failure and produces a weak diagram instead. |
 
-## What the skill offers that a terminal cannot show
+## What the sidecar cuts from the skill
 
-`show-me` is used unedited, so call 1 is offered two forms the sidecar cannot deliver:
+`show-me` offers two forms the sidecar cannot deliver, and both bullets are cut when the file is
+read. The file on disk is untouched. See [the vendor notes](vendor/README.md).
 
 - **Mermaid.** It does not render in a terminal. Unrendered, it is a wall of syntax that is worse
-  than the prose it replaced. Call 1 drew one in 1 of 16 runs, and call 2 passed it to the reader
-  unchanged, because nothing in either prompt says where the output goes.
-- **One HTML file**, which the skill opens with `Bash(open …)`. A sidecar has no shell.
+  than the prose it replaced.
+- **One focused HTML file**, which the bullet opens with `Bash(open …)`. A sidecar has no shell.
 
-Neither is filtered in code. Whether to bound them in the prompt, and whether any seam can render
-Mermaid, is open — see [Where does the sidecar attach, and where does its output go?](https://github.com/will-ness-ai/say-that-again/issues/7).
+Cutting the bullet is the whole fix. A model does not reach for a form the menu never showed it,
+and a line saying *no Mermaid* would put Mermaid in the context window on every call. Measured:
+Mermaid appeared in 1 of 16 diagram answers while the bullet was there, and 0 of 16 after.
+
+If a seam is ever found that renders Mermaid, the bullet comes back by deleting one marker. See
+[Where does the sidecar attach, and where does its output go?](https://github.com/will-ness-ai/say-that-again/issues/7).

@@ -4,17 +4,38 @@ Third-party skills that go into a prompt **word for word**. `pipeline.py` reads 
 run time, so what the model receives is what is in this directory. Do not edit them to fit the
 project. To change what a call is told, change the blocks around the skill, not the skill.
 
-**The YAML frontmatter is dropped when the file is read.** The file on disk stays byte for byte
-what its author published, so it can be diffed against the source. Frontmatter tells a harness
-*when* to load a skill; this prompt has already made that decision, so in the context window the
-block is a name, a description and a trigger that describe work the model is already doing. It
-costs 451 characters on every call and changes nothing.
+## What is dropped at read time
+
+The file on disk stays byte for byte what its author published, so it can be diffed against the
+source. Every edit happens once, in `vendored()`, and is named here.
+
+**The YAML frontmatter.** It tells a harness *when* to load a skill, and this prompt has already
+made that decision. In the context window it is a name, a description and a trigger that describe
+work the model is already doing. 451 characters on every call, changing nothing.
+
+**Two forms of `show-me` that this sidecar cannot deliver**, cut as whole bullets with their
+worked examples:
+
+| Form | Why it goes |
+|---|---|
+| Mermaid | It does not render in a terminal. Unrendered it is a wall of syntax, worse than the prose it replaced. |
+| One focused HTML file | The bullet ends in `Bash(open …)`. A sidecar has no shell. |
+
+Cutting the bullet is what removes the form. A model does not reach for a form the menu never
+showed it, and a line saying *no Mermaid* would put Mermaid in the context window on every call —
+see the negation rule in [`writing-for-agents`]. Measured: Mermaid appeared in 1 of 16 diagram
+answers while the bullet was there, and in **0 of 16** after it went.
+
+`without_forms()` treats a `- ` line inside a fence as a diff removal, not a bullet, so a form's
+worked example travels with it and the `### guidance` section survives.
+
+[`writing-for-agents`]: ../../../CLAUDE.md
 
 Both files carry the MIT licence.
 
 | File | Source | Goes into |
 |---|---|---|
-| `show-me.SKILL.md` | `humanlayer/skills`, `plugins/show-me/skills/show-me/SKILL.md`, commit `6ab9013`, read 2026-08-27 | the whole `<job>` of [call 1](../diagram.md), 3,072 chars in the prompt |
+| `show-me.SKILL.md` | `humanlayer/skills`, `plugins/show-me/skills/show-me/SKILL.md`, commit `6ab9013`, read 2026-08-27 | the whole `<job>` of [call 1](../diagram.md), 2,424 chars in the prompt |
 | `stop-slop.SKILL.md` | `hardikpandya/stop-slop`, `SKILL.md`, read 2026-08-29 | a `<stop-slop>` block beside the `<job>` of [call 2](../translation.md), 2,337 chars in the prompt |
 
 The digest of the first is at [`show-me-digest.md`](../../research/show-me-digest.md).
@@ -51,7 +72,8 @@ Three effects worth naming:
 - **The mark is now reliable.** With an explicit `<output-format>` block, all 17 diagrams across
   16 runs carried a mark. The earlier prompt, which asked for the mark inside prose, produced one
   in 9 of 12.
-- **Mermaid came back.** `show-me` offers it, so call 1 drew a sequence diagram once in 16 runs,
-  and call 2 passed it to the reader unchanged. Nothing in either prompt says the output goes to a
-  terminal, and a terminal renders Mermaid as a wall of syntax.
+- **Mermaid came back, and then it went.** `show-me` offers it, so call 1 drew a sequence diagram
+  once in 16 runs and call 2 passed it to the reader unchanged — nothing in either prompt says the
+  output goes to a terminal. Cutting the bullet fixed it: **0 of 16** runs since, and every fence
+  in every diagram answer is now `text` or plain.
 - **The French closing ask regressed.** S4 lost it on both passes, against 0 of 8 before.

@@ -149,6 +149,8 @@ What the change cost, over two passes on each arm:
 
 Then the frontmatter was dropped from both skills (451 characters saved on every call) and the tool calls were added to `<context>`. The two roughly cancel: English 132/134, French 131/134, ~4,300 prompt tokens per message.
 
+Then the Mermaid and HTML bullets were cut from the `show-me` menu, another 648 characters: English 130/134, French 130/134. Mermaid went from 1 of 16 diagram answers to **0 of 16**, and every fence is now `text` or plain. The score moved within the run-to-run spread this corpus shows, and the failures are not the same ones. **Four passes on four samples cannot separate a two-check move from noise**, and no claim here should be read as one.
+
 The fidelity risk the recommendation named did not appear: no translation pulled a fact out of `<context>` that the text block did not hold. The bill did move, and the two changes are entangled — `<context>` and the vendored skills landed together — so no part of the 29 % is attributable to one of them alone.
 
 No glossary is sent. That half of the recommendation stands.
