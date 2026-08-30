@@ -5,80 +5,71 @@
     {
       "name": "S1",
       "pass": 0,
-      "pass_count": 10,
+      "pass_count": 11,
       "check_count": 11,
-      "missing": [
-        [
-          "ask",
-          "original ends with a question"
-        ]
-      ],
+      "missing": [],
       "chars_in": 2115,
-      "chars_out": 5070,
-      "seconds": 5.6,
-      "cost_usd": 0.001004,
-      "prompt_tokens": 2300,
+      "chars_out": 2248,
+      "seconds": 3.9,
+      "cost_usd": 0.000552,
+      "prompt_tokens": 1941,
       "cached_tokens": 0,
-      "diagram_chars": 2840,
+      "diagram_chars": 1489,
       "failure": null
     },
     {
       "name": "S2",
       "pass": 0,
-      "pass_count": 12,
+      "pass_count": 11,
       "check_count": 12,
-      "missing": [],
+      "missing": [
+        [
+          "backtick",
+          "--watch"
+        ]
+      ],
       "chars_in": 848,
-      "chars_out": 934,
-      "seconds": 2.1,
-      "cost_usd": 0.000224,
-      "prompt_tokens": 1109,
+      "chars_out": 1383,
+      "seconds": 9.1,
+      "cost_usd": 0.001593,
+      "prompt_tokens": 3736,
       "cached_tokens": 0,
-      "diagram_chars": 85,
+      "diagram_chars": 10173,
       "failure": null
     },
     {
       "name": "S3",
       "pass": 0,
-      "pass_count": 37,
+      "pass_count": 38,
       "check_count": 39,
       "missing": [
         [
           "backtick",
           "cat examples.md \\| glow"
-        ],
-        [
-          "backtick",
-          "demo-repo/.route/config.json"
         ]
       ],
       "chars_in": 1951,
-      "chars_out": 2443,
-      "seconds": 4.2,
-      "cost_usd": 0.000788,
-      "prompt_tokens": 2525,
+      "chars_out": 2287,
+      "seconds": 5.5,
+      "cost_usd": 0.000795,
+      "prompt_tokens": 2539,
       "cached_tokens": 0,
-      "diagram_chars": 1568,
+      "diagram_chars": 2047,
       "failure": null
     },
     {
       "name": "S4",
       "pass": 0,
-      "pass_count": 4,
+      "pass_count": 5,
       "check_count": 5,
-      "missing": [
-        [
-          "ask",
-          "original ends with a question"
-        ]
-      ],
+      "missing": [],
       "chars_in": 1644,
-      "chars_out": 2468,
-      "seconds": 3.3,
-      "cost_usd": 0.000454,
-      "prompt_tokens": 1539,
+      "chars_out": 2346,
+      "seconds": 3.8,
+      "cost_usd": 0.000441,
+      "prompt_tokens": 1517,
       "cached_tokens": 0,
-      "diagram_chars": 483,
+      "diagram_chars": 511,
       "failure": null
     },
     {
@@ -88,12 +79,12 @@
       "check_count": 11,
       "missing": [],
       "chars_in": 2115,
-      "chars_out": 2378,
-      "seconds": 4.6,
-      "cost_usd": 0.000723,
-      "prompt_tokens": 2290,
+      "chars_out": 3718,
+      "seconds": 4.4,
+      "cost_usd": 0.00069,
+      "prompt_tokens": 1915,
       "cached_tokens": 0,
-      "diagram_chars": 2795,
+      "diagram_chars": 1384,
       "failure": null
     },
     {
@@ -103,12 +94,12 @@
       "check_count": 12,
       "missing": [],
       "chars_in": 848,
-      "chars_out": 945,
-      "seconds": 2.3,
-      "cost_usd": 0.000225,
-      "prompt_tokens": 1113,
+      "chars_out": 1072,
+      "seconds": 19.5,
+      "cost_usd": 0.002668,
+      "prompt_tokens": 5950,
       "cached_tokens": 0,
-      "diagram_chars": 112,
+      "diagram_chars": 17633,
       "failure": null
     },
     {
@@ -123,40 +114,160 @@
         ],
         [
           "backtick",
-          "demo-repo/.route/config.json"
+          "route ticket-skill add grill-design --when \""
         ]
       ],
       "chars_in": 1951,
-      "chars_out": 2584,
-      "seconds": 4.9,
-      "cost_usd": 0.00078,
-      "prompt_tokens": 2482,
+      "chars_out": 2250,
+      "seconds": 6.5,
+      "cost_usd": 0.001242,
+      "prompt_tokens": 3448,
       "cached_tokens": 0,
-      "diagram_chars": 1439,
+      "diagram_chars": 4359,
       "failure": null
     },
     {
       "name": "S4",
       "pass": 1,
-      "pass_count": 4,
+      "pass_count": 5,
       "check_count": 5,
+      "missing": [],
+      "chars_in": 1644,
+      "chars_out": 2051,
+      "seconds": 3.5,
+      "cost_usd": 0.000381,
+      "prompt_tokens": 1468,
+      "cached_tokens": 0,
+      "diagram_chars": 396,
+      "failure": null
+    },
+    {
+      "name": "S1",
+      "pass": 2,
+      "pass_count": 11,
+      "check_count": 11,
+      "missing": [],
+      "chars_in": 2115,
+      "chars_out": 3812,
+      "seconds": 4.4,
+      "cost_usd": 0.000727,
+      "prompt_tokens": 1966,
+      "cached_tokens": 0,
+      "diagram_chars": 1577,
+      "failure": null
+    },
+    {
+      "name": "S2",
+      "pass": 2,
+      "pass_count": 12,
+      "check_count": 12,
+      "missing": [],
+      "chars_in": 848,
+      "chars_out": 2550,
+      "seconds": 4.6,
+      "cost_usd": 0.000747,
+      "prompt_tokens": 1837,
+      "cached_tokens": 0,
+      "diagram_chars": 3365,
+      "failure": null
+    },
+    {
+      "name": "S3",
+      "pass": 2,
+      "pass_count": 38,
+      "check_count": 39,
       "missing": [
         [
-          "ask",
-          "original ends with a question"
+          "backtick",
+          "demo-repo/.route/config.json"
         ]
       ],
-      "chars_in": 1644,
-      "chars_out": 2666,
-      "seconds": 3.6,
-      "cost_usd": 0.000476,
-      "prompt_tokens": 1552,
+      "chars_in": 1951,
+      "chars_out": 2156,
+      "seconds": 6.9,
+      "cost_usd": 0.0012,
+      "prompt_tokens": 3377,
       "cached_tokens": 0,
-      "diagram_chars": 525,
+      "diagram_chars": 4479,
+      "failure": null
+    },
+    {
+      "name": "S4",
+      "pass": 2,
+      "pass_count": 5,
+      "check_count": 5,
+      "missing": [],
+      "chars_in": 1644,
+      "chars_out": 2560,
+      "seconds": 4.2,
+      "cost_usd": 0.000475,
+      "prompt_tokens": 1551,
+      "cached_tokens": 0,
+      "diagram_chars": 655,
+      "failure": null
+    },
+    {
+      "name": "S1",
+      "pass": 3,
+      "pass_count": 11,
+      "check_count": 11,
+      "missing": [],
+      "chars_in": 2115,
+      "chars_out": 3519,
+      "seconds": 4.2,
+      "cost_usd": 0.000678,
+      "prompt_tokens": 1919,
+      "cached_tokens": 0,
+      "diagram_chars": 1414,
+      "failure": null
+    },
+    {
+      "name": "S2",
+      "pass": 3,
+      "pass_count": 12,
+      "check_count": 12,
+      "missing": [],
+      "chars_in": 848,
+      "chars_out": 1038,
+      "seconds": 9.5,
+      "cost_usd": 0.001246,
+      "prompt_tokens": 3107,
+      "cached_tokens": 0,
+      "diagram_chars": 7829,
+      "failure": null
+    },
+    {
+      "name": "S3",
+      "pass": 3,
+      "pass_count": 39,
+      "check_count": 39,
+      "missing": [],
+      "chars_in": 1951,
+      "chars_out": 2429,
+      "seconds": 6.6,
+      "cost_usd": 0.001039,
+      "prompt_tokens": 3002,
+      "cached_tokens": 0,
+      "diagram_chars": 3151,
+      "failure": null
+    },
+    {
+      "name": "S4",
+      "pass": 3,
+      "pass_count": 5,
+      "check_count": 5,
+      "missing": [],
+      "chars_in": 1644,
+      "chars_out": 2506,
+      "seconds": 3.8,
+      "cost_usd": 0.000477,
+      "prompt_tokens": 1550,
+      "cached_tokens": 0,
+      "diagram_chars": 632,
       "failure": null
     }
   ],
-  "checks": 134,
-  "failures": 7,
-  "cost_usd": 0.004674
+  "checks": 268,
+  "failures": 5,
+  "cost_usd": 0.014951
 }

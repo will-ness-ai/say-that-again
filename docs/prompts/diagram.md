@@ -4,6 +4,10 @@ The `role` and `job` of the diagram call. See [the pipeline](../design/translati
 
 This call is machinery, not style. A style switches it on or off; a style does not change its text.
 
+Whatever this call returns goes to call 2 whole. Nothing reads or filters it in between — call 2
+holds both the original and this answer, so it decides which parts are pictures and which are
+worth placing. See [the translation prompt](translation.md).
+
 The form menu is taken from the `show-me` skill. See [the digest](../research/show-me-digest.md) for the source and for what was left out.
 
 The unit is one **text block** that passed the gate, not a whole message. See [ADR 0002](../adr/0002-re-write-assistant-text-blocks-only.md).
@@ -34,13 +38,7 @@ Show file responsibility as a shallow file tree.
 Show what changes as a diff, when the text already gives the shape that changes.
 Show a whole block when most of it is new.
 
-Fence each diagram. On the line above each fence, write one mark, then one line that names the
-point the diagram covers:
-
-  replaces-prose — the diagram carries that point completely, and holds every fact of the prose
-  it covers.
-
-  supplements — the diagram illustrates a point that the prose must still make.
+Fence each diagram. On the line above each fence, write one line that names the point it covers.
 
 Most text blocks need no picture. Return nothing when no view makes the text clearer. That is a
 correct answer.
@@ -51,7 +49,6 @@ correct answer.
 
 ```xml
 Draw the text in <text-block>.
-Use <user-message>, <context>, and <glossary> to understand it.
 ```
 
 ## Why each line is here
@@ -63,7 +60,7 @@ Use <user-message>, <context>, and <glossary> to understand it.
 | You cannot read the repository | The model writes as if it had looked, and states its guesses as facts. |
 | the six `Show` lines | The model reaches for one favoured form for every subject. |
 | Fence each diagram | Unfenced output is unusable to call 2 and to the renderer. |
-| replaces-prose … every fact | The mark is a claim about fidelity, not a preference. Without this clause the model deletes prose that held facts the picture never carried. |
+| one line that names the point | Call 2 must match each picture to a place in the prose. |
 | Most text blocks need no picture | The skill this menu comes from assumes a human asked for a picture. This call fires on every text block. |
 | Return nothing … a correct answer | The model treats an empty response as failure and produces a weak diagram instead. |
 

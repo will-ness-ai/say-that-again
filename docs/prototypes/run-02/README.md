@@ -52,7 +52,7 @@ Copy `pipeline.py`, `sidecar.py`, `discard.py`, `styles/` and a `hook.sh` that s
 
 One setting differs from the measurement runs: `STA_DETECT` is `on`, so the sidecar spends nothing when the harness will discard its answer. `diagrams` stays `on` — the author ruled it, and the picture is the point.
 
-**The style changed after the measurement runs.** Verdict 5 added three lines to the `job`, so a re-run of `bench.py` will not reproduce the tables above exactly. The scores after the change: 198/201 on the English arm, 130/134 on the French arm.
+**The prompts changed after the measurement runs.** See [the prompt rewrite](#the-prompt-rewrite) below, so a re-run of `bench.py` will not reproduce the tables above exactly. The scores after the rewrite: **200/201** on the English arm and **134/134** on the French arm, against 198/201 and 130/134 before it.
 
 Installing found two faults that the probes hid, and both are fixed here:
 
@@ -200,7 +200,7 @@ The labels, the prose inside the box, and the buttons are all French. The box is
 
 Three costs came with it, all measured on the French arm:
 
-- **The alignment breaks on any line the model rewrote.** The right border drifts, because the model cannot recount a box width after it changes the words inside. Cosmetic, and visible in every French diagram.
+- **The alignment broke on any line the model rewrote.** The right border drifted, and this was first read as a limit of the model. It was a missing instruction: the `job` asked the model to keep the shape of the diagram, and never asked it to redraw the borders around the new words. One line — *redraw its borders and columns so they line up around the new words* — fixed it. See [the prompt rewrite](#the-prompt-rewrite).
 - **The translation grows.** The French arm ran 1.23× to 2.34× the original, against 1.01× median for the English arm. A style that changes language pays for the diagram twice: once to draw it, once to re-write it.
 - **The diagram buries the ask.** This is the one that matters, and it is new.
 
@@ -208,9 +208,9 @@ Three costs came with it, all measured on the French arm:
 
 The French S1 holds its closing question — `Êtes-vous d'accord ?` — and then two diagram blocks after it. The reader scrolls to the end and finds a box, not a question. The ask is kept and lost at the same time, and [`check.py`](../run-01/check.py) catches it because it tests the last character.
 
-A prompt line was written for it: *"The ask is the last thing you write. No diagram comes after it."* **It did not work.** The same sample failed the same way on both passes with the line in place, so the line was cut — `translation.md` requires a line to change what the model does, and this one did not.
+A prompt line was written for it: *"The ask is the last thing you write. No diagram comes after it."* It did not work, and this was recorded as **"the fix is machinery, not a prompt"** — the sidecar would move trailing fences above the closing paragraph after call 2 returned.
 
-**The fix is machinery, not a prompt.** After call 2 returns, if the original ends with an ask and the translation ends with a fenced block, the sidecar moves the trailing fences above the closing paragraph. That is deterministic and testable, and it is the only part of this verdict still open.
+**That conclusion was wrong.** The line was added last, to a `job` that had already told the model to *place each diagram next to the text it supports*. The later instruction won. Stated once, after the picture paragraph instead of before it — *The closing question or recommendation is the last line of your answer. Prose and pictures alike come above it.* — the same rule took the French arm from 130/134 to **134/134**, with the ask last in all eight runs. No machinery is needed. See [the prompt rewrite](#the-prompt-rewrite).
 
 #### The refusal that is not empty
 
@@ -222,7 +222,7 @@ That happened in **three of the five S4 runs** — 845, 848, and 681 characters 
 
 Three things drive it. A chat model cannot really return nothing, so told to produce an absence it produces the most chat-like thing available: an explanation of the absence. The instruction has no positive form to obey, unlike "Keep every label". And at `temperature` 0.2 it is not repeatable — S4 refused on two passes and drew a `supplements` diagram on the third, from the same input.
 
-**Fixed in `pipeline.py`: an answer with no fenced block is no diagram, and it is dropped before call 2 sees it.** Every one of the 20 diagram answers is binary — a mark line and a fence, or prose and no fence at all, with nothing in between — so the test is exact. Without it the pipeline hands call 2 an essay and tells it to *place each diagram next to the text it supports*; the reader would then read "I don't see a view that makes this text clearer than prose" inside an assistant message the assistant never wrote.
+This was first fixed in `pipeline.py`, by dropping any call 1 answer that held no fence. **That fix was removed.** It is parsing between two model calls, it is lossy — a real picture that arrives with a prose preamble is thrown away whole — and call 2 already holds both the original and the answer. One line in the `job` does the same job and discards nothing: *drop anything in `<diagrams>` that is not a picture*. Across the 20 runs since, no refusal has reached the reader. See [the prompt rewrite](#the-prompt-rewrite).
 
 ### 6. The silent discard
 
@@ -267,6 +267,95 @@ Flash-Lite is the arm that fails. It is **10.7 times cheaper** and **2.2 times f
 
 **The default model stays where [ADR 0007](../../adr/0007-one-model-through-openrouter.md) put it.** The 117/117 of run 01 does not transfer, and no reading of that number should have been carried into a build. The honest claim is 331 of 335, one bad translation in twenty, and a warning that the check itself over-counts.
 
+#### Re-measured after the prompt rewrite
+
+The eaten ask was the whole case against Flash-Lite, and [the prompt rewrite](#the-prompt-rewrite)
+was aimed at exactly that defect. Both arms were run again against the rewritten prompts:
+
+| Model | Runs | Checks | Failures | What was lost | Cost per message |
+|---|---|---|---|---|---|
+| `anthropic/claude-haiku-4.5` | 12 | 200/201 | 1 | 1 buried ask | $0.0065 |
+| `google/gemini-2.5-flash-lite` | 16 | 263/268 | 5 | 5 backtick facts, **0 eaten asks** | $0.00093 |
+
+**Flash-Lite ate no ask in sixteen runs.** The loss was a fault of the prompt, not of the model,
+and the sentence "that is not a cost saving; it is a different product" does not survive the
+re-measurement. What remains against Flash-Lite is quieter and smaller: it drops a literal string
+about once every three runs — `--watch`, `demo-repo/.route/config.json` — where Haiku dropped
+none in twelve.
+
+**The default still stays where ADR 0007 put it**, on the higher score. But the gap is now one
+fidelity class rather than a broken product, and Flash-Lite is **7 times cheaper** on the same
+corpus. Whether that trade is worth taking is a live question again, and it is the author's to
+answer, not this run's.
+
+---
+
+## The prompt rewrite
+
+The seven verdicts above were reached against the prompts as they stood. Reading those prompts
+afterwards found three faults, and fixing them changed the numbers.
+
+**The prompts named tags that are never sent.** Both `job` blocks documented
+`Use <user-message>, <context>, and <glossary> to understand it`, and the `job` of call 2 spent a
+paragraph on how to use the glossary. Verdict 2 ruled that no context and no glossary is sent.
+The paragraph pointed at nothing and was paid for on every text block.
+
+**The two calls carried a protocol that neither needs.** Call 1 marked each picture
+`replaces-prose` or `supplements`, and call 2 held a paragraph that read the mark. Call 2 already
+holds the original *and* the picture, so it can judge coverage for itself — and call 1 emitted the
+mark in only 9 of 12 runs, so a third of the time call 2 read a signal that was not there. Both
+sides were cut, and replaced with *use the ones that earn their place*.
+
+**Code was parsing what call 1 returned.** `draw()` dropped any answer that held no fence, to
+catch the prose refusal. That is lossy — a real picture that arrives with a prose preamble is
+thrown away whole — and it puts a filter between two model calls that only one of them needs.
+Cut, and replaced with one line in the `job` of call 2: *drop anything in `<diagrams>` that is not
+a picture*.
+
+Removing the filter made the pipeline honest, and it exposed a defect the filter had been hiding:
+S4 now got a picture, and the picture landed after the closing question. That is the same buried
+ask the French arm had shown, now visible in English, twice in three passes.
+
+### The buried ask was a prompt problem
+
+The rule had been written before and had failed, and the failure was recorded as proof that the
+fix must be machinery. The rule was not wrong; its **position** was. It sat before the paragraph
+that told the model to place each picture beside its point, and that later paragraph won.
+
+Moved to a single statement after the picture paragraph:
+
+> The closing question or recommendation is the last line of your answer. Prose and pictures alike
+> come above it.
+
+| Arm | Before the rewrite | After |
+|---|---|---|
+| English, 3 passes | 198/201 | **200/201** |
+| French, 2 passes | 130/134 | **134/134** |
+| Flash-Lite, 4 passes | 3 eaten asks in 8 runs | **0 in 16 runs** |
+
+The `bare` style was rebuilt from the rewritten `plain` with the same fidelity rules removed, and
+verdict 3 holds unchanged: it dropped label `Q3` and the fact `read_message_history`, where
+`plain` dropped neither. The re-measured Flash-Lite arm is under [verdict 7](#7-does-the-fidelity-result-survive-the-real-model).
+
+The French arm ends every one of its eight runs on the ask. The English arm fails once in three
+passes on S4, where call 1 draws a card that summarises the whole answer: it has no single point
+to sit beside, so it drifts to the end. That is the last open defect, and it is call 1 drawing the
+wrong picture, not call 2 placing it wrongly.
+
+Two other results came from the rewrite. The alignment drift reported under verdict 5 as a limit
+of the model was a missing instruction — *redraw its borders and columns so they line up around
+the new words* — and the French boxes now close. And the `job` of call 2 fell from 1434 to 1200
+characters while scoring higher, so the paragraphs that were cut were not paying for themselves.
+
+### What this changes about the method
+
+A prompt line that fails is not proof that the behaviour needs code. It is one measurement of one
+line in one position, inside whatever else the prompt is already saying. The `job` that the failing
+line was added to held a dead glossary paragraph, a duplicated fact list, two overlapping rules
+about fences, and a protocol for a mark that arrived two-thirds of the time. That is not a fair
+test, and the conclusion drawn from it — *build the machinery* — would have shipped code for a
+defect that one moved sentence fixes.
+
 ---
 
 ## What this run also feeds
@@ -297,7 +386,7 @@ Three cases are now closed by measurement, and one is new.
 - **A failed call costs the translation and nothing else.** Every error path in `pipeline.py` ends at fail-open, and the live probes confirm the original always renders.
 - **Call 1 failed and call 2 did not** is handled: call 2 runs with an empty `<diagrams>`, and the translation is still correct.
 - **The `verbose` case has an answer.** The sidecar can see it coming and stand down. See verdict 6.
-- **New: call 1 can fail by answering.** A prose refusal is not an empty response, so it passes every check the pipeline makes and is sent to call 2 as if it were a diagram. Any build that keeps call 1 must test that the answer is fenced before it forwards it.
+- **New: call 1 can fail by answering.** A prose refusal is not an empty response, so it passes every check the pipeline makes and is sent to call 2 as if it were a diagram. Any build that keeps call 1 must tell call 2 to use only what is a picture. Do not filter it in code — see [the prompt rewrite](#the-prompt-rewrite).
 
 ### Test strategy
 

@@ -5,21 +5,16 @@
     {
       "name": "S1",
       "pass": 0,
-      "pass_count": 10,
+      "pass_count": 11,
       "check_count": 11,
-      "missing": [
-        [
-          "ask",
-          "original ends with a question"
-        ]
-      ],
+      "missing": [],
       "chars_in": 2115,
-      "chars_out": 4316,
-      "seconds": 14.4,
-      "cost_usd": 0.010912,
-      "prompt_tokens": 2217,
+      "chars_out": 3442,
+      "seconds": 13.3,
+      "cost_usd": 0.009444,
+      "prompt_tokens": 1944,
       "cached_tokens": 0,
-      "diagram_chars": 1894,
+      "diagram_chars": 973,
       "failure": null
     },
     {
@@ -29,36 +24,27 @@
       "check_count": 12,
       "missing": [],
       "chars_in": 848,
-      "chars_out": 1984,
-      "seconds": 6.5,
-      "cost_usd": 0.006156,
-      "prompt_tokens": 1541,
+      "chars_out": 1240,
+      "seconds": 3.6,
+      "cost_usd": 0.003392,
+      "prompt_tokens": 1167,
       "cached_tokens": 0,
-      "diagram_chars": 994,
+      "diagram_chars": 225,
       "failure": null
     },
     {
       "name": "S3",
       "pass": 0,
-      "pass_count": 37,
+      "pass_count": 39,
       "check_count": 39,
-      "missing": [
-        [
-          "backtick",
-          "cat examples.md \\| glow"
-        ],
-        [
-          "backtick",
-          "route ticket-skill add grill-design --when \""
-        ]
-      ],
+      "missing": [],
       "chars_in": 1951,
-      "chars_out": 2665,
-      "seconds": 12.4,
-      "cost_usd": 0.01069,
-      "prompt_tokens": 2685,
+      "chars_out": 2201,
+      "seconds": 15.6,
+      "cost_usd": 0.011949,
+      "prompt_tokens": 2979,
       "cached_tokens": 0,
-      "diagram_chars": 1077,
+      "diagram_chars": 2757,
       "failure": null
     },
     {
@@ -68,32 +54,27 @@
       "check_count": 5,
       "missing": [],
       "chars_in": 1644,
-      "chars_out": 2025,
-      "seconds": 7.8,
-      "cost_usd": 0.005633,
-      "prompt_tokens": 1573,
+      "chars_out": 2049,
+      "seconds": 7.6,
+      "cost_usd": 0.005415,
+      "prompt_tokens": 1570,
       "cached_tokens": 0,
-      "diagram_chars": 0,
+      "diagram_chars": 579,
       "failure": null
     },
     {
       "name": "S1",
       "pass": 1,
-      "pass_count": 10,
+      "pass_count": 11,
       "check_count": 11,
-      "missing": [
-        [
-          "ask",
-          "original ends with a question"
-        ]
-      ],
+      "missing": [],
       "chars_in": 2115,
-      "chars_out": 3575,
-      "seconds": 12.9,
-      "cost_usd": 0.009704,
-      "prompt_tokens": 2089,
+      "chars_out": 3490,
+      "seconds": 13.7,
+      "cost_usd": 0.009374,
+      "prompt_tokens": 1934,
       "cached_tokens": 0,
-      "diagram_chars": 1044,
+      "diagram_chars": 1019,
       "failure": null
     },
     {
@@ -103,12 +84,12 @@
       "check_count": 12,
       "missing": [],
       "chars_in": 848,
-      "chars_out": 1674,
-      "seconds": 5.5,
-      "cost_usd": 0.00536,
-      "prompt_tokens": 1450,
+      "chars_out": 1547,
+      "seconds": 5.3,
+      "cost_usd": 0.004745,
+      "prompt_tokens": 1290,
       "cached_tokens": 0,
-      "diagram_chars": 589,
+      "diagram_chars": 547,
       "failure": null
     },
     {
@@ -118,12 +99,12 @@
       "check_count": 39,
       "missing": [],
       "chars_in": 1951,
-      "chars_out": 3812,
-      "seconds": 16.9,
-      "cost_usd": 0.014261,
-      "prompt_tokens": 2851,
+      "chars_out": 2169,
+      "seconds": 15.5,
+      "cost_usd": 0.01199,
+      "prompt_tokens": 2990,
       "cached_tokens": 0,
-      "diagram_chars": 1473,
+      "diagram_chars": 2869,
       "failure": null
     },
     {
@@ -133,16 +114,16 @@
       "check_count": 5,
       "missing": [],
       "chars_in": 1644,
-      "chars_out": 2027,
+      "chars_out": 2043,
       "seconds": 7.8,
-      "cost_usd": 0.005618,
-      "prompt_tokens": 1573,
+      "cost_usd": 0.005437,
+      "prompt_tokens": 1577,
       "cached_tokens": 0,
-      "diagram_chars": 0,
+      "diagram_chars": 610,
       "failure": null
     }
   ],
   "checks": 134,
-  "failures": 4,
-  "cost_usd": 0.068334
+  "failures": 0,
+  "cost_usd": 0.061746
 }
