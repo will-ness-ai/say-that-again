@@ -476,6 +476,32 @@ summarises the whole answer, so there is no single point for it to sit beside. O
 
 ---
 
+## Swapping the editing skill
+
+`stop-slop` was replaced with [`unslop`](../../prompts/parts/unslop.md), on the author's call.
+The swap is written up in [the parts notes](../../prompts/parts/README.md#whether-unslop-earns-its-place);
+two results belong here.
+
+**A skill written for an author will delete a translator's facts.** Sent as published, `unslop`
+scored **240/268** on the English arm against `stop-slop`'s 254, and the losses were not spread
+out: list numbers eight times, labels six times. Six of its 31 rules answer *whether a thing
+stays* rather than *how it is said* — *use the natural number*, *convert those to prose*, *name
+the source or delete*. Cutting those six, and the `## Adding soul` section that asks the writer
+for opinions and a first person, took it to **256 and 262 of 268**.
+
+**Position beat wording, again.** The block first sat below the `job`, where `<stop-slop>` had
+sat. Moving it above, so the `job` and its picture rules are the last thing call 2 reads, moved
+the English picture share from 30 % to 36 % with no change in fidelity. This is the third time in
+this run that a rule failed for its position rather than its content — see
+[the buried ask](#the-buried-ask-was-a-prompt-problem) and
+[placement cannot be conditional](#two-things-that-were-wrong-on-the-way).
+
+**The swap does not pay for itself yet.** Fidelity is a wash, the picture share is down about
+five points on both arms, and call 2's system message grew from 4,498 to 6,968 characters. The
+test that would settle it has still not been run: call 2 with no editing block at all.
+
+---
+
 ## What this run also feeds
 
 ### Cost model

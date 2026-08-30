@@ -59,21 +59,20 @@ Write the translation and nothing else.
 </job>
 ```
 
-## `stop-slop`
+## `unslop`
 
-[`parts/stop-slop.md`](parts/stop-slop.md), in its own block beside the `job`. It rides with
-every style, so a style does not have to restate it. It began as the `stop-slop` skill; see
-[where it came from](parts/README.md).
+[`parts/unslop.md`](parts/unslop.md), 25 numbered rules for cutting the tells that mark a text
+as machine-written. It rides with every style, so a style does not have to restate it. It began
+as the `unslop` skill; see [where it came from and what was cut](parts/README.md).
 
-Two of its rules argue with the `job` above it, and the `job` wins:
+**It sits above the `job`, not below it.** Where two blocks disagree the model follows the one it
+read last, and the `job` is where the pictures live. Measured on the English arm, four passes:
+the same rules above the `job` put 36 % of the answer inside a fenced block, and below it 30 %.
+Fidelity did not move between the two.
 
-- It asks for **varied rhythm**. This project measured that as a no-op — see *Lines that were
-  cut* below.
-- It asks the writer to **name the specific thing**. A translator may not invent a fact that the
-  original never held. See [ADR 0003](../adr/0003-a-translation-not-a-rewrite.md).
-
-Its reference links (`references/phrases.md` and two others) resolve to nothing inside a prompt.
-They are left in because nothing has measured whether removing them changes an answer.
+It still argues with the `job` in one place, and the `job` wins: it asks the writer to **name the
+specific thing**, and a translator may not invent a fact the original never held. See
+[ADR 0003](../adr/0003-a-translation-not-a-rewrite.md).
 
 ## `instructions` (the user prompt)
 
@@ -145,6 +144,7 @@ Drafted, then removed for failing the test above.
   paragraph, took the French arm from 130/134 to 134/134. It now sits in the closing check, which
   is the last thing the model reads. See [run 02](../prototypes/run-02/README.md).
 - **"Vary sentence length to create rhythm."** Rhythm makes prose sound human. It does not make
-  the reader understand faster. `stop-slop` asks for it anyway, in its own words; where the two
-  disagree the `job` wins.
+  the reader understand faster. The `unslop` skill asked for it too, under *Adding soul*; that
+  whole section was cut when the skill was forked, because a translation adds no opinion, no
+  first person, and no deliberate mess.
 - **"Avoid sounding like an AI."** A prohibition with no positive target.
